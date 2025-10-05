@@ -1,29 +1,38 @@
 [
   {
     "id": "1",
-    "title": "Introduction to Mathematics",
-    "description": "Learn the basics of mathematics for children",
-    "thumbnail": "/images/math-course.jpg",
+    "title": "Introduction to Positive Parenting",
+    "description": "Learn evidence-based techniques to build positive behaviors and reduce conflict at home.",
+    "thumbnail": "/images/courses/course-1.jpg",
+    "instructor": "Dr. Sarah Mitchell",
+    "rating": 4.8,
+    "studentCount": 2340,
     "duration": 120,
-    "category": "Mathematics",
+    "category": "Parenting",
     "price": 29.99
   },
   {
     "id": "2",
-    "title": "Science Fundamentals",
-    "description": "Explore the world of science",
-    "thumbnail": "/images/science-course.jpg",
+    "title": "Classroom Management Fundamentals",
+    "description": "Master proven strategies for creating an engaging, respectful classroom environment.",
+    "thumbnail": "/images/courses/course-2.jpg",
+    "instructor": "Prof. Michael Chen",
+    "rating": 4.9,
+    "studentCount": 1850,
     "duration": 90,
-    "category": "Science",
-    "price": 24.99
+    "category": "Education",
+    "price": 34.99
   },
   {
     "id": "3",
-    "title": "Creative Writing",
-    "description": "Develop writing skills through creative exercises",
-    "thumbnail": "/images/writing-course.jpg",
-    "duration": 60,
-    "category": "Language",
-    "price": 19.99
+    "title": "Understanding ADHD Behaviors",
+    "description": "Comprehensive guide to supporting children with ADHD through evidence-based interventions.",
+    "thumbnail": "/images/courses/course-3.jpg",
+    "instructor": "Dr. Emily Rodriguez",
+    "rating": 4.7,
+    "studentCount": 1520,
+    "duration": 150,
+    "category": "Special Needs",
+    "price": 39.99
   }
 ]

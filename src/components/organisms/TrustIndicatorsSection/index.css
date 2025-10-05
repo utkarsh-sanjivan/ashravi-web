@@ -1,0 +1,51 @@
+.trust-indicators-section {
+  padding: 3rem 1rem;
+  background: linear-gradient(135deg, #0070f3 0%, #7928ca 100%);
+  color: white;
+}
+
+.trust-indicators-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.indicators-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .indicators-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.indicator-item {
+  padding: 1rem;
+}
+
+.indicator-value {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .indicator-value {
+    font-size: 2.5rem;
+  }
+}
+
+.indicator-label {
+  font-size: 1.25rem;
+  opacity: 0.95;
+}
+
+@media (max-width: 768px) {
+  .indicator-label {
+    font-size: 1rem;
+  }
+}

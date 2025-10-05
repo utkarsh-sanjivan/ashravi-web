@@ -1,0 +1,24 @@
+.theme-toggle {
+  padding: var(--spacing-sm);
+  border: none;
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  background: var(--color-border);
+}
+
+.theme-icon-svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-text);
+}

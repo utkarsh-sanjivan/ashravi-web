@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from './user.slice';
-import courseCatalogReducer from './courseCatalog.slice';
+import coursesReducer from './courses.slice';
 import wishlistReducer from './wishlist.slice';
 import childrenReducer from './children.slice';
 import assessmentReducer from './assessment.slice';
@@ -9,7 +9,7 @@ export const makeStore = () => {
   return configureStore({
     reducer: {
       user: userReducer,
-      courseCatalog: courseCatalogReducer,
+      courses: coursesReducer,
       wishlist: wishlistReducer,
       children: childrenReducer,
       assessment: assessmentReducer,

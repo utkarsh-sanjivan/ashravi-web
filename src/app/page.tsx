@@ -1,15 +1,19 @@
-import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { isAuthenticated } from '@/lib/auth';
+import LandingPage from '@/components/pages/LandingPage';
+import Homepage from '@/components/pages/Homepage';
 
-export const metadata: Metadata = {
-  title: 'Home - Ashravi Web',
-  description: 'Welcome to Ashravi Web learning platform',
+export const metadata = {
+  title: 'Ashravi - Empowering Parents and Teachers',
+  description: 'Evidence-based child behavior strategies for parents, teachers, and counselors',
 };
 
-export default function Home() {
-  return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-4xl font-bold mb-4">Welcome to Ashravi Web</h1>
-      <p className="text-lg">Your comprehensive learning platform for children</p>
-    </main>
-  );
+export default async function RootPage() {
+  const authenticated = await isAuthenticated();
+
+  if (authenticated) {
+    return <Homepage />;
+  }
+
+  return <LandingPage />;
 }
