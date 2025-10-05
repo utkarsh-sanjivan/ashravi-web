@@ -1,0 +1,29 @@
+[
+  {
+    "id": "1",
+    "title": "Introduction to Mathematics",
+    "description": "Learn the basics of mathematics for children",
+    "thumbnail": "/images/math-course.jpg",
+    "duration": 120,
+    "category": "Mathematics",
+    "price": 29.99
+  },
+  {
+    "id": "2",
+    "title": "Science Fundamentals",
+    "description": "Explore the world of science",
+    "thumbnail": "/images/science-course.jpg",
+    "duration": 90,
+    "category": "Science",
+    "price": 24.99
+  },
+  {
+    "id": "3",
+    "title": "Creative Writing",
+    "description": "Develop writing skills through creative exercises",
+    "thumbnail": "/images/writing-course.jpg",
+    "duration": 60,
+    "category": "Language",
+    "price": 19.99
+  }
+]

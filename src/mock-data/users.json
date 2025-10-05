@@ -1,0 +1,8 @@
+[
+  {
+    "id": "user1",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "children": ["child1", "child2"]
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "child1",
+    "name": "Emma",
+    "age": 8,
+    "avatar": "/images/avatar1.jpg"
+  },
+  {
+    "id": "child2",
+    "name": "Liam",
+    "age": 10,
+    "avatar": "/images/avatar2.jpg"
+  }
+]
