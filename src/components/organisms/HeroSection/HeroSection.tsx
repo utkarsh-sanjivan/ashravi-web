@@ -69,7 +69,7 @@ export default function HeroSection({
               </Button>
             </Link>
             <Link href={secondaryCTA.href}>
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="hero-outline-btn">
                 {secondaryCTA.text}
               </Button>
             </Link>

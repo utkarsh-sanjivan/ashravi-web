@@ -20,12 +20,6 @@
   color: white;
 }
 
-/* Remove the filter that makes logo completely white */
-.public-navbar.transparent .logo-image {
-  /* Remove: filter: brightness(0) invert(1); */
-  /* Logo will keep its original colors */
-}
-
 .public-navbar.scrolled {
   background-color: var(--color-bg);
   border-bottom-color: var(--color-border);
@@ -192,7 +186,7 @@
   }
 }
 
-/* Mobile Menu Button */
+/* Mobile Menu Button with hover effect */
 .mobile-menu-button {
   padding: 0.5rem;
   background: none;
@@ -202,14 +196,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
 }
 
+/* Hover effect for mobile menu button */
+.mobile-menu-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Transparent navbar - white button hover */
 .public-navbar.transparent .mobile-menu-button {
   color: white;
 }
 
+.public-navbar.transparent .mobile-menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Scrolled navbar - normal button hover */
 .public-navbar.scrolled .mobile-menu-button {
   color: var(--color-text);
+}
+
+.public-navbar.scrolled .mobile-menu-button:hover {
+  background-color: var(--color-surface);
+}
+
+/* Dark mode hover */
+:root[data-theme='dark'] .mobile-menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .menu-icon {

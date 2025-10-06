@@ -35,13 +35,44 @@
 
 .btn-outline {
   background-color: transparent;
-  border: 2px solid var(--color-border);
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  color: var(--color-text);
+}
+
+/* Light mode outline button */
+.btn-outline {
+  border-color: rgba(0, 0, 0, 0.2);
   color: var(--color-text);
 }
 
 .btn-outline:hover:not(:disabled) {
   border-color: var(--color-primary);
   color: var(--color-primary);
+  background-color: rgba(0, 112, 243, 0.05);
+}
+
+/* Dark mode outline button */
+:root[data-theme='dark'] .btn-outline {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--color-text);
+}
+
+:root[data-theme='dark'] .btn-outline:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: rgba(0, 112, 243, 0.1);
+}
+
+/* When on transparent navbar (over hero image) */
+.public-navbar.transparent .btn-outline {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.public-navbar.transparent .btn-outline:hover:not(:disabled) {
+  border-color: white;
+  color: white;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .btn-sm {
@@ -57,4 +88,9 @@
 .btn-lg {
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: var(--font-size-lg);
+}
+
+/* Utility class for full width */
+.w-full {
+  width: 100%;
 }
