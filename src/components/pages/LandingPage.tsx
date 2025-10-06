@@ -13,7 +13,8 @@ import { landingFeatures, landingSteps, landingTestimonials } from '@/config/lan
 export default function LandingPage() {
   return (
     <>
-      <PublicNavbar />
+      {/* showSearch={false} - No search bar on landing page */}
+      <PublicNavbar isAuthenticated={false} showSearch={false} transparent={true} />
 
       <HeroSection
         headline="Empowering Parents to Build Positive Child Behaviors"

@@ -14,7 +14,12 @@ import { homepageSteps, homepageTestimonials, trustIndicators } from '@/config/h
 export default function Homepage() {
   return (
     <>
-      <PublicNavbar />
+      {/* 
+        isAuthenticated={true} - Hide login/signup buttons
+        showSearch={true} - Show search bar
+        transparent={true} - Transparent navbar over hero
+      */}
+      <PublicNavbar isAuthenticated={true} showSearch={true} transparent={true} />
 
       <HeroSection
         headline="Transform Your Parenting with Evidence-Based Strategies"
@@ -27,7 +32,7 @@ export default function Homepage() {
           text: 'Browse Courses',
           href: '/courses',
         }}
-        backgroundVideo="/videos/hero-home.mp4"
+        backgroundImage="/images/hero-home.jpg"
       />
 
       <TrustIndicatorsSection indicators={trustIndicators} />

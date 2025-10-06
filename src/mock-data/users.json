@@ -1,8 +1,26 @@
 [
   {
     "id": "user1",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "children": ["child1", "child2"]
+    "name": "Priya Sharma",
+    "email": "priya.sharma@example.com",
+    "role": "parent",
+    "avatar": "/images/testimonials/avatar1.jpg",
+    "children": ["child1", "child2"],
+    "enrolledCourses": ["1", "2"],
+    "wishlist": ["3"],
+    "createdAt": "2024-12-01T10:30:00Z",
+    "lastLogin": "2025-10-06T18:00:00Z"
+  },
+  {
+    "id": "user2",
+    "name": "Rajesh Kumar",
+    "email": "rajesh.kumar@example.com",
+    "role": "parent",
+    "avatar": "/images/testimonials/avatar2.jpg",
+    "children": ["child3"],
+    "enrolledCourses": ["1"],
+    "wishlist": ["2", "3"],
+    "createdAt": "2024-11-15T14:20:00Z",
+    "lastLogin": "2025-10-05T20:30:00Z"
   }
 ]

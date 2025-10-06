@@ -9,13 +9,9 @@ export interface Testimonial {
   id: string;
   name: string;
   role: string;
-  avatar: string;
+  avatar?: string; // Made optional
   quote: string;
   rating: number;
-  metric?: {
-    label: string;
-    value: string;
-  };
 }
 
 export interface TestimonialsSectionProps {
@@ -43,7 +39,7 @@ export default function TestimonialsSection({ testimonials }: TestimonialsSectio
         <div className="section-header">
           <h2 className="section-title">Success Stories</h2>
           <p className="section-subtitle">
-            Real results from parents and educators using Ashravi
+            Real results from parents using Ashravi
           </p>
         </div>
 
@@ -55,15 +51,17 @@ export default function TestimonialsSection({ testimonials }: TestimonialsSectio
             {testimonials.map((testimonial) => (
               <div key={testimonial.id} className="testimonial-card">
                 <div className="testimonial-header">
-                  <div className="avatar-wrapper">
-                    <Image
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      width={80}
-                      height={80}
-                      className="testimonial-avatar"
-                    />
-                  </div>
+                  {testimonial.avatar && (
+                    <div className="avatar-wrapper">
+                      <Image
+                        src={testimonial.avatar}
+                        alt={testimonial.name}
+                        width={80}
+                        height={80}
+                        className="testimonial-avatar"
+                      />
+                    </div>
+                  )}
                   <div className="testimonial-info">
                     <h3 className="testimonial-name">{testimonial.name}</h3>
                     <p className="testimonial-role">{testimonial.role}</p>
@@ -81,13 +79,6 @@ export default function TestimonialsSection({ testimonials }: TestimonialsSectio
                 <blockquote className="testimonial-quote">
                   "{testimonial.quote}"
                 </blockquote>
-
-                {testimonial.metric && (
-                  <div className="testimonial-metric">
-                    <span className="metric-value">{testimonial.metric.value}</span>
-                    <span className="metric-label">{testimonial.metric.label}</span>
-                  </div>
-                )}
               </div>
             ))}
           </div>

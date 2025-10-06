@@ -1,6 +1,8 @@
 .public-navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   background-color: var(--color-bg);
   border-bottom: 1px solid transparent;
@@ -8,9 +10,35 @@
   width: 100%;
 }
 
+.public-navbar.transparent {
+  background-color: transparent;
+  border-bottom: none;
+}
+
+.public-navbar.transparent .navbar-content,
+.public-navbar.transparent .nav-link {
+  color: white;
+}
+
+/* Remove the filter that makes logo completely white */
+.public-navbar.transparent .logo-image {
+  /* Remove: filter: brightness(0) invert(1); */
+  /* Logo will keep its original colors */
+}
+
 .public-navbar.scrolled {
+  background-color: var(--color-bg);
   border-bottom-color: var(--color-border);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.public-navbar.scrolled .navbar-content,
+.public-navbar.scrolled .nav-link {
+  color: var(--color-text);
+}
+
+.public-navbar.scrolled .logo-image {
+  filter: none;
 }
 
 .navbar-container {
@@ -29,10 +57,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
+  min-height: 70px;
   width: 100%;
   max-width: 1920px;
   margin: 0 auto;
+  gap: 2rem;
 }
 
 .navbar-logo {
@@ -78,12 +107,38 @@
   }
 }
 
+/* Search Bar */
+.navbar-search {
+  flex: 1;
+  max-width: 600px;
+}
+
+.desktop-search {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-search {
+    display: block;
+  }
+}
+
+.mobile-search {
+  display: block;
+  padding: 0 0 1rem 0;
+}
+
+@media (min-width: 1024px) {
+  .mobile-search {
+    display: none;
+  }
+}
+
 /* Desktop Menu */
 .navbar-menu {
   display: none;
   gap: 2rem;
-  flex: 1;
-  justify-content: center;
+  flex-shrink: 0;
 }
 
 @media (min-width: 768px) {
@@ -124,6 +179,19 @@
   }
 }
 
+/* Mobile Actions - Theme Toggle + Menu Button */
+.mobile-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .mobile-actions {
+    display: none;
+  }
+}
+
 /* Mobile Menu Button */
 .mobile-menu-button {
   padding: 0.5rem;
@@ -136,10 +204,12 @@
   justify-content: center;
 }
 
-@media (min-width: 768px) {
-  .mobile-menu-button {
-    display: none;
-  }
+.public-navbar.transparent .mobile-menu-button {
+  color: white;
+}
+
+.public-navbar.scrolled .mobile-menu-button {
+  color: var(--color-text);
 }
 
 .menu-icon {
@@ -199,13 +269,6 @@
   .mobile-menu {
     display: none;
   }
-}
-
-.mobile-menu-header {
-  padding: 1rem;
-  border-bottom: 1px solid var(--color-border);
-  display: flex;
-  justify-content: flex-end;
 }
 
 .mobile-menu-links {
