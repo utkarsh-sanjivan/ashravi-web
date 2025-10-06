@@ -142,14 +142,64 @@
 }
 
 .nav-link {
+  position: relative;
   color: var(--color-text);
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.2s;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  padding: 0.5rem 0;
+}
+
+/* Hover effect for navigation links */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
 }
 
 .nav-link:hover {
+  color: var(--color-primary);
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Transparent navbar - white hover effect */
+.public-navbar.transparent .nav-link {
+  color: white;
+}
+
+.public-navbar.transparent .nav-link:hover {
+  color: white;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.public-navbar.transparent .nav-link::after {
+  background-color: white;
+}
+
+/* Scrolled navbar - primary color hover */
+.public-navbar.scrolled .nav-link {
+  color: var(--color-text);
+}
+
+.public-navbar.scrolled .nav-link:hover {
+  color: var(--color-primary);
+}
+
+.public-navbar.scrolled .nav-link::after {
+  background-color: var(--color-primary);
+}
+
+/* Dark mode adjustments */
+:root[data-theme='dark'] .nav-link:hover {
   color: var(--color-primary);
 }
 
@@ -299,7 +349,7 @@
   color: var(--color-text);
   text-decoration: none;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
   border-left: 3px solid transparent;
 }
 
@@ -307,6 +357,7 @@
 .mobile-nav-link:focus {
   background-color: var(--color-surface);
   border-left-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .mobile-menu-actions {
