@@ -13,7 +13,6 @@ import { landingFeatures, landingSteps, landingTestimonials } from '@/config/lan
 export default function LandingPage() {
   return (
     <>
-      {/* showSearch={false} - No search bar on landing page */}
       <PublicNavbar isAuthenticated={false} showSearch={false} transparent={true} />
 
       <HeroSection
@@ -27,7 +26,9 @@ export default function LandingPage() {
           text: 'Explore Courses',
           href: '/courses',
         }}
-        backgroundImage="/images/hero-landing.jpg"
+        backgroundImage="/images/hero-landing-desktop.jpg"
+        backgroundImageTablet="/images/hero-landing-tablet.jpg"
+        backgroundImageMobile="/images/hero-landing-mobile.jpg"
       />
 
       <WhyChooseSection

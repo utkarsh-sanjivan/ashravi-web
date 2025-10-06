@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { isAuthenticated, getUser } from '@/lib/auth';
 import LandingPage from '@/components/pages/LandingPage';
 import Homepage from '@/components/pages/Homepage';
@@ -10,6 +11,22 @@ export const metadata: Metadata = {
 
 interface RootPageProps {
   searchParams: { view?: string };
+}
+
+// Loading component
+function PageLoading() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      fontSize: '1.5rem',
+      color: '#0070f3'
+    }}>
+      Loading...
+    </div>
+  );
 }
 
 export default async function RootPage({ searchParams }: RootPageProps) {
@@ -27,17 +44,29 @@ export default async function RootPage({ searchParams }: RootPageProps) {
   const user = await getUser();
 
   // Log user info in development
-  if (process.env.NODE_ENV === 'development' && user) {
-    console.log('🔐 Authenticated User:', {
-      name: user.name,
-      email: user.email,
-      children: user.children.length,
-    });
+  if (process.env.NODE_ENV === 'development') {
+    if (user) {
+      console.log('🔐 Authenticated User:', {
+        name: user.name,
+        email: user.email,
+        id: user.id,
+      });
+    } else {
+      console.log('🔓 Not authenticated - showing Landing Page');
+    }
   }
 
   if (authenticated) {
-    return <Homepage />;
+    return (
+      <Suspense fallback={<PageLoading />}>
+        <Homepage />
+      </Suspense>
+    );
   }
 
-  return <LandingPage />;
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <LandingPage />
+    </Suspense>
+  );
 }

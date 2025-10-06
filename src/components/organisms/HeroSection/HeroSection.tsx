@@ -18,6 +18,8 @@ export interface HeroSectionProps {
   };
   backgroundVideo?: string;
   backgroundImage?: string;
+  backgroundImageTablet?: string;
+  backgroundImageMobile?: string;
 }
 
 export default function HeroSection({
@@ -27,6 +29,8 @@ export default function HeroSection({
   secondaryCTA,
   backgroundVideo,
   backgroundImage,
+  backgroundImageTablet,
+  backgroundImageMobile,
 }: HeroSectionProps) {
   return (
     <section className="hero-section">
@@ -44,10 +48,28 @@ export default function HeroSection({
       )}
       
       {!backgroundVideo && backgroundImage && (
-        <div 
-          className="hero-background-image"
-          style={{ backgroundImage: `url(${backgroundImage})` }}
-        />
+        <>
+          {/* Desktop Image - 16:9 aspect ratio */}
+          <picture>
+            <source
+              media="(min-width: 1024px)"
+              srcSet={backgroundImage}
+            />
+            <source
+              media="(min-width: 768px)"
+              srcSet={backgroundImageTablet || backgroundImage}
+            />
+            <source
+              media="(max-width: 767px)"
+              srcSet={backgroundImageMobile || backgroundImageTablet || backgroundImage}
+            />
+            <img
+              src={backgroundImage}
+              alt="Hero background"
+              className="hero-background-image"
+            />
+          </picture>
+        </>
       )}
 
       <div className="hero-overlay" />

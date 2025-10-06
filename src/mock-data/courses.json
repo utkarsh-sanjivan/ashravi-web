@@ -9,23 +9,25 @@
     "studentCount": 2340,
     "duration": 120,
     "category": "Parenting",
-    "price": 29.99
+    "price": 1999,
+    "originalPrice": 3999
   },
   {
     "id": "2",
-    "title": "Classroom Management Fundamentals",
-    "description": "Master proven strategies for creating an engaging, respectful classroom environment.",
+    "title": "Managing Toddler Tantrums",
+    "description": "Master proven strategies for handling emotional outbursts with patience and understanding.",
     "thumbnail": "/images/courses/course-2.jpg",
     "instructor": "Prof. Michael Chen",
     "rating": 4.9,
     "studentCount": 1850,
     "duration": 90,
-    "category": "Education",
-    "price": 34.99
+    "category": "Behavior",
+    "price": 1499,
+    "originalPrice": 2999
   },
   {
     "id": "3",
-    "title": "Understanding ADHD Behaviors",
+    "title": "Understanding ADHD in Children",
     "description": "Comprehensive guide to supporting children with ADHD through evidence-based interventions.",
     "thumbnail": "/images/courses/course-3.jpg",
     "instructor": "Dr. Emily Rodriguez",
@@ -33,6 +35,46 @@
     "studentCount": 1520,
     "duration": 150,
     "category": "Special Needs",
-    "price": 39.99
+    "price": 2499,
+    "originalPrice": 4999
+  },
+  {
+    "id": "4",
+    "title": "Sleep Training for Toddlers",
+    "description": "Gentle, effective methods to help your child develop healthy sleep habits and routines.",
+    "thumbnail": "/images/courses/course-4.jpg",
+    "instructor": "Dr. Lisa Wong",
+    "rating": 4.6,
+    "studentCount": 2100,
+    "duration": 75,
+    "category": "Sleep",
+    "price": 1299,
+    "originalPrice": 1999
+  },
+  {
+    "id": "5",
+    "title": "Building Communication Skills",
+    "description": "Foster emotional intelligence and effective communication with your child at every age.",
+    "thumbnail": "/images/courses/course-5.jpg",
+    "instructor": "James Peterson",
+    "rating": 4.8,
+    "studentCount": 1680,
+    "duration": 100,
+    "category": "Development",
+    "price": 1799,
+    "originalPrice": 2999
+  },
+  {
+    "id": "6",
+    "title": "Positive Discipline Strategies",
+    "description": "Learn to set boundaries and teach responsibility without punishment or rewards.",
+    "thumbnail": "/images/courses/course-6.jpg",
+    "instructor": "Dr. Amanda Foster",
+    "rating": 4.9,
+    "studentCount": 2450,
+    "duration": 110,
+    "category": "Parenting",
+    "price": 1999,
+    "originalPrice": 3499
   }
 ]

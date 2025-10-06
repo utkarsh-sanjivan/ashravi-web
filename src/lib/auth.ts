@@ -21,19 +21,22 @@ export async function getUser(): Promise<User | null> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session');
   
-  // FOR DEVELOPMENT: Return a mock user to test Homepage
-  if (process.env.NODE_ENV === 'development') {
-    // Return first user from mock data
-    const mockUser = usersData[0] as User;
-    return mockUser;
-  }
-  
   if (!sessionCookie) {
     return null;
   }
 
   try {
     const userData = JSON.parse(sessionCookie.value);
+    
+    // If we have a userId, get full user data from mock
+    if (userData.id) {
+      const fullUser = usersData.find(u => u.id === userData.id);
+      if (fullUser) {
+        return fullUser as User;
+      }
+    }
+    
+    // Otherwise return basic user data
     return userData;
   } catch {
     return null;

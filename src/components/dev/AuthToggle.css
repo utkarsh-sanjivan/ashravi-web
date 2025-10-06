@@ -17,9 +17,14 @@
   transition: all 0.3s ease;
 }
 
-.auth-toggle-button:hover {
+.auth-toggle-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.auth-toggle-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .auth-toggle-menu {
@@ -72,8 +77,13 @@
   border-bottom: none;
 }
 
-.auth-option:hover {
+.auth-option:hover:not(:disabled) {
   background-color: var(--color-bg);
+}
+
+.auth-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .auth-option.logout {
