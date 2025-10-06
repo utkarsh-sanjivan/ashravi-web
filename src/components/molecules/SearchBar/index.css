@@ -1,0 +1,211 @@
+.search-bar-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+}
+
+.search-bar-form {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+/* Dark mode adjustments */
+:root[data-theme='dark'] .search-bar-form {
+  background-color: rgba(26, 26, 26, 0.95);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.search-bar-form:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 112, 243, 0.2);
+  background-color: white;
+}
+
+:root[data-theme='dark'] .search-bar-form:focus-within {
+  background-color: rgba(26, 26, 26, 1);
+  border-color: var(--color-primary);
+}
+
+.search-bar-input {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: #111111;
+  outline: none;
+}
+
+/* Force dark text in both light and dark mode */
+:root[data-theme='dark'] .search-bar-input {
+  color: #eeeeee;
+}
+
+.search-bar-input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'] .search-bar-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search-bar-button {
+  padding: 0.875rem 1.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.search-bar-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme='dark'] .search-bar-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.search-icon {
+  width: 20px;
+  height: 20px;
+  color: #111111;
+}
+
+:root[data-theme='dark'] .search-icon {
+  color: #eeeeee;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 100;
+  animation: slideDown 0.2s ease;
+}
+
+:root[data-theme='dark'] .search-suggestions {
+  background-color: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+:root[data-theme='dark'] .suggestion-item {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme='dark'] .suggestion-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.suggestion-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.suggestion-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.suggestion-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #111111;
+}
+
+:root[data-theme='dark'] .suggestion-title {
+  color: #eeeeee;
+}
+
+.suggestion-category {
+  font-size: 0.8125rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'] .suggestion-category {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.no-suggestions {
+  padding: 1.5rem;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.9375rem;
+}
+
+:root[data-theme='dark'] .no-suggestions {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 768px) {
+  .search-bar-wrapper {
+    max-width: 100%;
+  }
+
+  .search-bar-input {
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+  }
+
+  .search-bar-button {
+    padding: 0.75rem 1rem;
+  }
+
+  .search-icon {
+    width: 18px;
+    height: 18px;
+  }
+}

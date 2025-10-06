@@ -1,0 +1,373 @@
+.public-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background-color: var(--color-bg);
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.public-navbar.transparent {
+  background-color: transparent;
+  border-bottom: none;
+}
+
+.public-navbar.transparent .navbar-content,
+.public-navbar.transparent .nav-link {
+  color: white;
+}
+
+.public-navbar.scrolled {
+  background-color: var(--color-bg);
+  border-bottom-color: var(--color-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.public-navbar.scrolled .navbar-content,
+.public-navbar.scrolled .nav-link {
+  color: var(--color-text);
+}
+
+.public-navbar.scrolled .logo-image {
+  filter: none;
+}
+
+.navbar-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 1rem;
+}
+
+@media (min-width: 1280px) {
+  .navbar-container {
+    padding: 0 2rem;
+  }
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 70px;
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  gap: 2rem;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo-wrapper {
+  position: relative;
+  height: 40px;
+  width: auto;
+  display: flex;
+  align-items: center;
+}
+
+.logo-image {
+  width: auto;
+  height: 40px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+/* Responsive logo sizes */
+@media (max-width: 640px) {
+  .logo-wrapper {
+    height: 32px;
+  }
+  
+  .logo-image {
+    height: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .logo-wrapper {
+    height: 50px;
+  }
+  
+  .logo-image {
+    height: 50px;
+  }
+}
+
+/* Search Bar */
+.navbar-search {
+  flex: 1;
+  max-width: 600px;
+}
+
+.desktop-search {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-search {
+    display: block;
+  }
+}
+
+.mobile-search {
+  display: block;
+  padding: 0 0 1rem 0;
+}
+
+@media (min-width: 1024px) {
+  .mobile-search {
+    display: none;
+  }
+}
+
+/* Desktop Menu */
+.navbar-menu {
+  display: none;
+  gap: 2rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .navbar-menu {
+    display: flex;
+  }
+}
+
+.nav-link {
+  position: relative;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  padding: 0.5rem 0;
+}
+
+/* Hover effect for navigation links */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Transparent navbar - white hover effect */
+.public-navbar.transparent .nav-link {
+  color: white;
+}
+
+.public-navbar.transparent .nav-link:hover {
+  color: white;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.public-navbar.transparent .nav-link::after {
+  background-color: white;
+}
+
+/* Scrolled navbar - primary color hover */
+.public-navbar.scrolled .nav-link {
+  color: var(--color-text);
+}
+
+.public-navbar.scrolled .nav-link:hover {
+  color: var(--color-primary);
+}
+
+.public-navbar.scrolled .nav-link::after {
+  background-color: var(--color-primary);
+}
+
+/* Dark mode adjustments */
+:root[data-theme='dark'] .nav-link:hover {
+  color: var(--color-primary);
+}
+
+/* Desktop Actions */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.desktop-actions {
+  display: none;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .desktop-actions {
+    display: flex;
+  }
+}
+
+/* Mobile Actions - Theme Toggle + Menu Button */
+.mobile-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .mobile-actions {
+    display: none;
+  }
+}
+
+/* Mobile Menu Button with hover effect */
+.mobile-menu-button {
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+/* Hover effect for mobile menu button */
+.mobile-menu-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Transparent navbar - white button hover */
+.public-navbar.transparent .mobile-menu-button {
+  color: white;
+}
+
+.public-navbar.transparent .mobile-menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Scrolled navbar - normal button hover */
+.public-navbar.scrolled .mobile-menu-button {
+  color: var(--color-text);
+}
+
+.public-navbar.scrolled .mobile-menu-button:hover {
+  background-color: var(--color-surface);
+}
+
+/* Dark mode hover */
+:root[data-theme='dark'] .mobile-menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Mobile Menu Overlay */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Mobile Menu - Vertical Sidebar */
+.mobile-menu {
+  position: fixed;
+  top: 70px;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 85vw;
+  background-color: var(--color-bg);
+  border-left: 1px solid var(--color-border);
+  box-shadow: -4px 0 6px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+  overflow-y: auto;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-menu {
+    display: none;
+  }
+}
+
+.mobile-menu-links {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+}
+
+.mobile-nav-link {
+  padding: 1rem 1.5rem;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link:focus {
+  background-color: var(--color-surface);
+  border-left-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.mobile-menu-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.w-full {
+  width: 100%;
+}

@@ -1,0 +1,33 @@
+.link {
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.link-default {
+  color: var(--color-text);
+}
+
+.link-default:hover {
+  color: var(--color-primary);
+}
+
+.link-primary {
+  color: var(--color-primary);
+}
+
+.link-primary:hover {
+  opacity: 0.8;
+}
+
+.link-secondary {
+  color: var(--color-secondary);
+}
+
+.link-secondary:hover {
+  opacity: 0.8;
+}
+
+.link-underline {
+  text-decoration: underline;
+}

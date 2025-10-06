@@ -1,0 +1,152 @@
+.hero-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-background-video,
+.hero-background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* Ensure proper aspect ratio coverage on all screens */
+@media (max-width: 767px) {
+  .hero-background-image {
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hero-background-image {
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-background-image {
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1280px;
+  padding: 2rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hero-text {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-headline {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: white;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+  .hero-headline {
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-headline {
+    font-size: 4rem;
+  }
+}
+
+.hero-subheadline {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 2.5rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+  .hero-subheadline {
+    font-size: 1rem;
+  }
+}
+
+.hero-cta-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Hero outline button override for better visibility */
+.hero-outline-btn {
+  border: 2px solid rgba(255, 255, 255, 0.6) !important;
+  color: white !important;
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.hero-outline-btn:hover {
+  border-color: white !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  color: white;
+  opacity: 0.8;
+}
+
+.scroll-icon {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 2s infinite;
+}

@@ -1,15 +1,72 @@
-import { Metadata } from 'next';
+import { Suspense } from 'react';
+import { isAuthenticated, getUser } from '@/lib/auth';
+import LandingPage from '@/components/pages/LandingPage';
+import Homepage from '@/components/pages/Homepage';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Home - Ashravi Web',
-  description: 'Welcome to Ashravi Web learning platform',
+  title: 'Ashravi - Empowering Parents',
+  description: 'Discover evidence-based parenting strategies designed by child behavior experts',
 };
 
-export default function Home() {
+interface RootPageProps {
+  searchParams: { view?: string };
+}
+
+// Loading component
+function PageLoading() {
   return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-4xl font-bold mb-4">Welcome to Ashravi Web</h1>
-      <p className="text-lg">Your comprehensive learning platform for children</p>
-    </main>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      fontSize: '1.5rem',
+      color: '#0070f3'
+    }}>
+      Loading...
+    </div>
+  );
+}
+
+export default async function RootPage({ searchParams }: RootPageProps) {
+  // Allow viewing specific page via URL parameter for development
+  if (searchParams.view === 'home') {
+    return <Homepage />;
+  }
+  
+  if (searchParams.view === 'landing') {
+    return <LandingPage />;
+  }
+
+  // Normal authentication check
+  const authenticated = await isAuthenticated();
+  const user = await getUser();
+
+  // Log user info in development
+  if (process.env.NODE_ENV === 'development') {
+    if (user) {
+      console.log('🔐 Authenticated User:', {
+        name: user.name,
+        email: user.email,
+        id: user.id,
+      });
+    } else {
+      console.log('🔓 Not authenticated - showing Landing Page');
+    }
+  }
+
+  if (authenticated) {
+    return (
+      <Suspense fallback={<PageLoading />}>
+        <Homepage />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <LandingPage />
+    </Suspense>
   );
 }

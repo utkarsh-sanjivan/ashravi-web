@@ -1,14 +1,62 @@
 [
   {
     "id": "child1",
-    "name": "Emma",
+    "name": "Aarav",
     "age": 8,
-    "avatar": "/images/avatar1.jpg"
+    "gender": "male",
+    "avatar": "/images/children/boy1.jpg",
+    "parentId": "user1",
+    "assessmentCompleted": true,
+    "assessmentScore": 75,
+    "behaviorGoals": [
+      "Reduce tantrum frequency",
+      "Improve social skills",
+      "Better emotion regulation"
+    ],
+    "progressTracking": {
+      "tantrums": {
+        "baseline": 15,
+        "current": 5,
+        "improvement": 67
+      },
+      "socialInteractions": {
+        "baseline": 40,
+        "current": 75,
+        "improvement": 87
+      }
+    }
   },
   {
     "id": "child2",
-    "name": "Liam",
+    "name": "Diya",
+    "age": 5,
+    "gender": "female",
+    "avatar": "/images/children/girl1.jpg",
+    "parentId": "user1",
+    "assessmentCompleted": true,
+    "assessmentScore": 82,
+    "behaviorGoals": [
+      "Improve bedtime routine",
+      "Reduce screen time dependency"
+    ],
+    "progressTracking": {
+      "bedtimeCompliance": {
+        "baseline": 30,
+        "current": 80,
+        "improvement": 167
+      }
+    }
+  },
+  {
+    "id": "child3",
+    "name": "Arjun",
     "age": 10,
-    "avatar": "/images/avatar2.jpg"
+    "gender": "male",
+    "avatar": "/images/children/boy2.jpg",
+    "parentId": "user2",
+    "assessmentCompleted": false,
+    "assessmentScore": null,
+    "behaviorGoals": [],
+    "progressTracking": {}
   }
 ]

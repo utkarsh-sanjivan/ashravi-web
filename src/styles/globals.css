@@ -21,9 +21,32 @@ body {
   font-family: var(--font-geist-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif);
 }
 
+/* Cursor pointer for all interactive elements */
+a,
+button,
+input[type="submit"],
+input[type="button"],
+input[type="radio"],
+input[type="checkbox"],
+select,
+label[for],
+[role="button"],
+[tabindex]:not([tabindex="-1"]) {
+  cursor: pointer;
+}
+
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Disabled state should not have pointer cursor */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,4 +56,33 @@ a {
     --color-border: #333333;
     --color-surface: #1a1a1a;
   }
+}
+
+/* Remove ALL Next.js development indicators */
+body > div[style*="position: fixed"],
+body > div[style*="bottom:"],
+body > div[style*="bottom: "],
+body > nextjs-portal,
+#__next-build-watcher,
+#__next-prerender-indicator,
+nextjs-portal,
+[data-nextjs-scroll-focus-boundary],
+.__next-dev-tools,
+.__nextjs_original-stack-frame {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide Vercel toolbar and all build indicators */
+div[style*="pointer-events"],
+div[class*="__next"],
+div[id*="__next"] {
+  position: static !important;
+}
+
+/* Ensure no fixed overlays */
+body > div:last-child[style*="position: fixed"][style*="bottom"] {
+  display: none !important;
 }
