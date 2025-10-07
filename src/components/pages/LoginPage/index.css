@@ -1,0 +1,241 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-container {
+  width: 100%;
+  max-width: 480px;
+}
+
+.login-card {
+  background-color: var(--color-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 3rem;
+}
+
+@media (max-width: 640px) {
+  .login-card {
+    padding: 2rem;
+  }
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-link {
+  text-decoration: none;
+}
+
+.login-logo {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.login-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+  font-size: 1rem;
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.method-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background-color: var(--color-surface);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+}
+
+.method-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text);
+  opacity: 0.6;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.method-btn.active {
+  background-color: var(--color-bg);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.method-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.forgot-link {
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.password-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-text);
+  opacity: 0.5;
+  pointer-events: all;
+}
+
+.password-toggle:hover {
+  opacity: 1;
+}
+
+.phone-input-group {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.country-code-select {
+  width: 120px;
+  padding: 0.75rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 1rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.country-code-select:focus {
+  border-color: var(--color-primary);
+}
+
+.resend-timer {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  opacity: 0.6;
+}
+
+.resend-button {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.resend-button:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.divider-text {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  opacity: 0.5;
+  font-weight: 500;
+}
+
+.social-login {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-footer {
+  margin-top: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.footer-text {
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.footer-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+.guest-link {
+  color: var(--color-text);
+  opacity: 0.6;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.guest-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}

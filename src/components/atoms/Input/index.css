@@ -1,7 +1,7 @@
 .input-wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 0.5rem;
   width: 100%;
 }
 
@@ -10,43 +10,91 @@
 }
 
 .input-label {
-  font-size: var(--font-size-sm);
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-text);
 }
 
-.input {
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-base);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  outline: none;
-  transition: all 0.2s ease;
+.required-mark {
+  color: var(--color-error, #ef4444);
+  margin-left: 0.25rem;
 }
 
-.input:focus {
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.input-field:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
 }
 
-.input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: var(--color-surface);
+.input-field.has-left-icon {
+  padding-left: 3rem;
+}
+
+.input-field.has-right-icon {
+  padding-right: 3rem;
+}
+
+.input-container.has-error .input-field {
+  border-color: var(--color-error, #ef4444);
+}
+
+.input-container.has-error .input-field:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--color-text);
+  opacity: 0.5;
+}
+
+.left-icon {
+  left: 1rem;
+}
+
+.right-icon {
+  right: 1rem;
 }
 
 .input-error {
-  border-color: var(--color-error);
+  font-size: 0.875rem;
+  color: var(--color-error, #ef4444);
 }
 
-.input-error:focus {
-  border-color: var(--color-error);
-  box-shadow: 0 0 0 3px rgba(238, 0, 0, 0.1);
+.input-helper {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  opacity: 0.6;
 }
 
-.input-error-message {
-  font-size: var(--font-size-sm);
-  color: var(--color-error);
+.input-field::placeholder {
+  color: var(--color-text);
+  opacity: 0.4;
+}
+
+.input-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-surface);
 }

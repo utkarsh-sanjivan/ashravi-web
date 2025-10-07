@@ -3,6 +3,7 @@ import PublicNavbar from '@/components/organisms/PublicNavbar';
 import HeroSection from '@/components/organisms/HeroSection';
 import TrustIndicatorsSection from '@/components/organisms/TrustIndicatorsSection';
 import FeaturedCoursesSection from '@/components/organisms/FeaturedCoursesSection';
+import PopularCoursesSection from '@/components/organisms/PopularCoursesSection';
 import HowItWorksSection from '@/components/organisms/HowItWorksSection';
 import AssessmentPreviewSection from '@/components/organisms/AssessmentPreviewSection';
 import TestimonialsSection from '@/components/organisms/TestimonialsSection';
@@ -34,11 +35,23 @@ export default function Homepage() {
 
       <TrustIndicatorsSection indicators={trustIndicators} />
 
+      {/* Recommended Courses with Carousel */}
       <FeaturedCoursesSection
         title="Recommended For You"
         subtitle="Personalized parenting courses based on your family's needs"
         limit={6}
         isAuthenticated={true}
+        useCarousel={true}
+      />
+
+      {/* Popular Courses with Auto-play Carousel */}
+      <PopularCoursesSection
+        title="Most Popular Courses"
+        subtitle="Join thousands of parents learning with our top-rated courses"
+        limit={6}
+        isAuthenticated={true}
+        ctaText="Explore All Courses"
+        ctaHref="/courses"
       />
 
       <HowItWorksSection steps={homepageSteps} />

@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFeaturedCourses } from '@/store/courses.slice';
 import CourseCard from '@/components/molecules/CourseCard';
+import Carousel from '@/components/molecules/Carousel';
 import Spinner from '@/components/atoms/Spinner';
 import './index.css';
 
@@ -14,6 +15,7 @@ export interface FeaturedCoursesSectionProps {
   isAuthenticated?: boolean;
   ctaText?: string;
   ctaHref?: string;
+  useCarousel?: boolean;
 }
 
 export default function FeaturedCoursesSection({
@@ -23,6 +25,7 @@ export default function FeaturedCoursesSection({
   isAuthenticated = false,
   ctaText,
   ctaHref,
+  useCarousel = true,
 }: FeaturedCoursesSectionProps) {
   const dispatch = useAppDispatch();
   const { featuredCourses, loading, error } = useAppSelector((state) => state.courses);
@@ -56,6 +59,14 @@ export default function FeaturedCoursesSection({
     );
   }
 
+  const courseCards = featuredCourses.map((course) => (
+    <CourseCard 
+      key={course.id} 
+      {...course} 
+      isAuthenticated={isAuthenticated} 
+    />
+  ));
+
   return (
     <section className="featured-courses-section">
       <div className="featured-courses-container">
@@ -64,15 +75,25 @@ export default function FeaturedCoursesSection({
           <p className="section-subtitle">{subtitle}</p>
         </div>
 
-        <div className="courses-grid">
-          {featuredCourses.map((course) => (
-            <CourseCard 
-              key={course.id} 
-              {...course} 
-              isAuthenticated={isAuthenticated} 
-            />
-          ))}
-        </div>
+        {useCarousel ? (
+          <Carousel
+            slidesToShow={{
+              mobile: 1,
+              tablet: 2,
+              desktop: 3,
+            }}
+            autoPlay={false}
+            showDots={true}
+            showArrows={true}
+            gap={24} // Changed from 32 to 24
+          >
+            {courseCards}
+          </Carousel>
+        ) : (
+          <div className="courses-grid">
+            {courseCards}
+          </div>
+        )}
 
         {ctaText && ctaHref && (
           <div className="section-cta">

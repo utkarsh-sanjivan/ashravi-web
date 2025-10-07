@@ -1,0 +1,137 @@
+.carousel-container {
+  position: relative;
+  width: 100%;
+  padding: 0 60px; /* Add padding for arrows */
+}
+
+@media (max-width: 768px) {
+  .carousel-container {
+    padding: 0; /* Remove padding on mobile since arrows are hidden */
+  }
+}
+
+.carousel-wrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.3s ease-in-out;
+  will-change: transform;
+}
+
+.carousel-slide {
+  flex-shrink: 0;
+}
+
+/* Navigation Arrows */
+.carousel-arrow {
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: white;
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme='dark'] .carousel-arrow {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.carousel-arrow:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 6px 16px rgba(0, 112, 243, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-arrow:hover:not(:disabled) .arrow-icon {
+  color: white;
+}
+
+.carousel-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.carousel-arrow-left {
+  left: 0;
+}
+
+.carousel-arrow-right {
+  right: 0;
+}
+
+.arrow-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--color-text);
+  transition: color 0.3s ease;
+}
+
+.arrow-icon-left {
+  transform: rotate(90deg);
+}
+
+.arrow-icon-right {
+  transform: rotate(-90deg);
+}
+
+/* Hide arrows on mobile */
+@media (max-width: 768px) {
+  .carousel-arrow {
+    display: none;
+  }
+}
+
+/* Dots Indicator */
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.carousel-dot:hover {
+  background-color: var(--color-primary);
+  opacity: 0.7;
+}
+
+.carousel-dot.active {
+  background-color: var(--color-primary);
+  width: 32px;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .carousel-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .carousel-dot.active {
+    width: 24px;
+  }
+}
