@@ -101,19 +101,56 @@ export default function LoginPage() {
         password,
       });
 
-      if (response.success) {
-        // Store access token in cookie for server-side access
-        const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60; // 30 days or 7 days
+      if (response.success && response.data && response.data.accessToken) {
+        console.log('✅ Login successful in component!');
+        console.log('🔑 Access token from response:', response.data.accessToken.substring(0, 30) + '...');
+        
+        // Double-check localStorage
+        const storedToken = localStorage.getItem('accessToken');
+        console.log('💾 Access token in localStorage:', storedToken ? `${storedToken.substring(0, 30)}...` : 'NOT FOUND');
+        
+        if (!storedToken) {
+          console.error('❌ CRITICAL: Token not in localStorage after authService.login()');
+          console.error('🔧 Manually storing tokens...');
+          localStorage.setItem('accessToken', response.data.accessToken);
+          if (response.data.refreshToken) {
+            localStorage.setItem('refreshToken', response.data.refreshToken);
+          }
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        
+        // Set cookies for server-side access
+        const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60;
+        
+        // Set access token cookie
         document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
         
-        // Check if there's a redirect URL
-        const redirectUrl = searchParams.get('redirect') || '/';
+        // Set refresh token cookie if available
+        if (response.data.refreshToken) {
+          document.cookie = `refreshToken=${response.data.refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          console.log('🍪 Refresh token cookie set');
+        }
         
-        // Redirect to the intended page or homepage
-        router.push(redirectUrl);
-        router.refresh();
+        console.log('🍪 Access token cookie set');
+        console.log('📦 All cookies:', document.cookie);
+        
+        // Final verification before redirect
+        console.log('🔍 FINAL CHECK before redirect:');
+        console.log('  - localStorage accessToken:', localStorage.getItem('accessToken') ? 'EXISTS' : 'MISSING');
+        console.log('  - localStorage refreshToken:', localStorage.getItem('refreshToken') ? 'EXISTS' : 'MISSING');
+        console.log('  - localStorage user:', localStorage.getItem('user') ? 'EXISTS' : 'MISSING');
+        console.log('  - cookies:', document.cookie ? 'EXISTS' : 'MISSING');
+        
+        // Wait a bit for storage operations
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Hard refresh to ensure everything is loaded
+        const redirectUrl = searchParams?.get?.('redirect') || '/';
+        console.log('🚀 Redirecting to:', redirectUrl);
+        window.location.href = redirectUrl;
       } else {
-        setGeneralError(response.message || 'Login failed');
+        console.error('❌ Invalid response structure:', response);
+        setGeneralError('Login failed: Invalid response from server');
       }
     } catch (error: any) {
       console.error('Login error:', error);

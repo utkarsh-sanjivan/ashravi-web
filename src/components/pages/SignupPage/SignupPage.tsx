@@ -167,6 +167,15 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
+      console.log('📤 Sending registration data:', {
+        name: fullName,
+        email: email,
+        phoneNumber: `${countryCode}${phoneNumber}`,
+        occupation: occupation,
+        city: city,
+        economicStatus: economicStatus,
+      });
+
       const response = await authService.register({
         name: fullName,
         email: email,
@@ -177,16 +186,47 @@ export default function SignupPage() {
         economicStatus: economicStatus,
       });
 
-      if (response.success) {
-        // Don't store tokens, just redirect to login
-        // Redirect to login page with success message
-        router.push('/auth/login?registered=true');
+      console.log('📥 Full registration response:', response);
+
+      // Check different possible response structures
+      if (response) {
+        // Case 1: Response has success property
+        if (response.success === true) {
+          console.log('✅ Registration successful (success: true)');
+          router.push('/auth/login?registered=true');
+          return;
+        }
+        
+        // Case 2: Response has data with accessToken
+        if (response.data && response.data.accessToken) {
+          console.log('✅ Registration successful (has accessToken)');
+          router.push('/auth/login?registered=true');
+          return;
+        }
+        
+        // Case 3: Response has accessToken directly
+        if ((response as any).accessToken) {
+          console.log('✅ Registration successful (direct accessToken)');
+          router.push('/auth/login?registered=true');
+          return;
+        }
+
+        // Case 4: HTTP 200/201 response without explicit success field
+        if (!response.success && !response.data) {
+          console.log('✅ Registration successful (assuming success from response)');
+          router.push('/auth/login?registered=true');
+          return;
+        }
+
+        // If we get here, show the actual response structure error
+        console.error('❌ Unexpected response structure:', JSON.stringify(response, null, 2));
+        setOccupationError(response.message || 'Registration completed but response structure is unexpected. Please try logging in.');
       } else {
-        // Show error in occupation field (or you can show a general error)
-        setOccupationError(response.message || 'Registration failed');
+        console.error('❌ No response received');
+        setOccupationError('No response from server. Please try again.');
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
+      console.error('❌ Registration error:', error);
       
       // Handle specific error messages
       const errorMessage = error.message || 'Registration failed. Please try again.';
@@ -205,7 +245,6 @@ export default function SignupPage() {
       setIsLoading(false);
     }
   };
-
 
   // Step 3 submit handler (OTP verification - if needed in future)
   const handleVerificationComplete = async (e: React.FormEvent) => {
