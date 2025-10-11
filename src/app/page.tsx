@@ -1,7 +1,5 @@
-import { Suspense } from 'react';
 import { isAuthenticated } from '@/lib/auth';
-import LandingPage from '@/components/pages/LandingPage';
-import Homepage from '@/components/pages/Homepage';
+import RootPageWrapper from '@/components/pages/RootPageWrapper';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -10,49 +8,17 @@ export const metadata: Metadata = {
 };
 
 interface RootPageProps {
-  searchParams: { view?: string };
+  searchParams: Promise<{ view?: string }>;
 }
 
-// Loading component
-function PageLoading() {
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      fontSize: '1.5rem',
-      color: '#0070f3'
-    }}>
-      Loading...
-    </div>
-  );
-}
+export default async function RootPage(props: RootPageProps) {
+  // Await searchParams before using it
+  const searchParams = await props.searchParams;
 
-export default async function RootPage({ searchParams }: RootPageProps) {
-  // Allow viewing specific page via URL parameter for development
-  if (searchParams.view === 'home') {
-    return <Homepage />;
-  }
-  
-  if (searchParams.view === 'landing') {
-    return <LandingPage />;
-  }
-
-  // Normal authentication check
+  // Check authentication on server
   const authenticated = await isAuthenticated();
 
-  if (authenticated) {
-    return (
-      <Suspense fallback={<PageLoading />}>
-        <Homepage />
-      </Suspense>
-    );
-  }
+  console.log('🔐 Server-side authentication check:', authenticated);
 
-  return (
-    <Suspense fallback={<PageLoading />}>
-      <LandingPage />
-    </Suspense>
-  );
+  return <RootPageWrapper serverAuthenticated={authenticated} />;
 }

@@ -21,7 +21,7 @@ class APIClient {
       return token?.value || null;
     }
     
-    // Client-side: Get from localStorage or cookies
+    // Client-side: Get from localStorage
     return localStorage.getItem('accessToken') || null;
   }
 
@@ -39,11 +39,16 @@ class APIClient {
       url += `?${queryString}`;
     }
 
-    // Prepare headers
-    const headers: HeadersInit = {
+    // Prepare headers - explicitly typed as Record<string, string>
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...fetchOptions.headers,
     };
+
+    // Merge any additional headers from options
+    if (fetchOptions.headers) {
+      const optionHeaders = fetchOptions.headers as Record<string, string>;
+      Object.assign(headers, optionHeaders);
+    }
 
     // Add authentication token if required
     if (requiresAuth) {
@@ -53,11 +58,23 @@ class APIClient {
       }
     }
 
+    console.log('🌐 API Request:', {
+      method: fetchOptions.method || 'GET',
+      url,
+      hasAuth: !!headers['Authorization']
+    });
+
     try {
       const response = await fetch(url, {
         ...fetchOptions,
         headers,
         credentials: 'include', // Important for cookies
+      });
+
+      console.log('📡 API Response:', {
+        status: response.status,
+        ok: response.ok,
+        url
       });
 
       // Handle unauthorized - refresh token or redirect to login
@@ -77,15 +94,25 @@ class APIClient {
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData;
+        try {
+          errorData = await response.json();
+          console.error('❌ API Error Response:', errorData);
+        } catch (e) {
+          console.error('❌ API Error (no JSON):', response.statusText);
+          errorData = { message: response.statusText };
+        }
+        
         throw new Error(
-          errorData.message || `API Error: ${response.statusText}`
+          errorData.message || errorData.error || `API Error: ${response.statusText}`
         );
       }
 
-      return response.json() as Promise<T>;
+      const data = await response.json();
+      console.log('✅ API Success Response:', data);
+      return data as T;
     } catch (error) {
-      console.error('API Request Error:', error);
+      console.error('❌ API Request Error:', error);
       throw error;
     }
   }

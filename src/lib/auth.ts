@@ -20,7 +20,7 @@ export async function getUser(): Promise<User | null> {
   }
 
   try {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api/v1';
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
     
     // Call API to get user profile
     const response = await fetch(`${apiBase}/auth/profile`, {
@@ -74,7 +74,7 @@ export async function getUserById(userId: string): Promise<User | null> {
       return null;
     }
 
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api/v1';
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
     const response = await fetch(`${apiBase}/users/${userId}`, {
       headers: {

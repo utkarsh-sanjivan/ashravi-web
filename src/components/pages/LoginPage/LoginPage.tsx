@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Input from '@/components/atoms/Input';
 import Button from '@/components/atoms/Button';
 import Checkbox from '@/components/atoms/Checkbox';
@@ -15,10 +15,14 @@ type LoginMethod = 'email' | 'phone';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user just registered
+  const justRegistered = searchParams.get('registered') === 'true';
 
   // Email/Password state
   const [email, setEmail] = useState('');
@@ -97,16 +101,56 @@ export default function LoginPage() {
         password,
       });
 
-      if (response.success) {
-        // Store access token in cookie for server-side access
-        const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60; // 30 days or 7 days
+      if (response.success && response.data && response.data.accessToken) {
+        console.log('✅ Login successful in component!');
+        console.log('🔑 Access token from response:', response.data.accessToken.substring(0, 30) + '...');
+        
+        // Double-check localStorage
+        const storedToken = localStorage.getItem('accessToken');
+        console.log('💾 Access token in localStorage:', storedToken ? `${storedToken.substring(0, 30)}...` : 'NOT FOUND');
+        
+        if (!storedToken) {
+          console.error('❌ CRITICAL: Token not in localStorage after authService.login()');
+          console.error('🔧 Manually storing tokens...');
+          localStorage.setItem('accessToken', response.data.accessToken);
+          if (response.data.refreshToken) {
+            localStorage.setItem('refreshToken', response.data.refreshToken);
+          }
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        
+        // Set cookies for server-side access
+        const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60;
+        
+        // Set access token cookie
         document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
         
-        // Redirect to homepage
-        router.push('/');
-        router.refresh();
+        // Set refresh token cookie if available
+        if (response.data.refreshToken) {
+          document.cookie = `refreshToken=${response.data.refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          console.log('🍪 Refresh token cookie set');
+        }
+        
+        console.log('🍪 Access token cookie set');
+        console.log('📦 All cookies:', document.cookie);
+        
+        // Final verification before redirect
+        console.log('🔍 FINAL CHECK before redirect:');
+        console.log('  - localStorage accessToken:', localStorage.getItem('accessToken') ? 'EXISTS' : 'MISSING');
+        console.log('  - localStorage refreshToken:', localStorage.getItem('refreshToken') ? 'EXISTS' : 'MISSING');
+        console.log('  - localStorage user:', localStorage.getItem('user') ? 'EXISTS' : 'MISSING');
+        console.log('  - cookies:', document.cookie ? 'EXISTS' : 'MISSING');
+        
+        // Wait a bit for storage operations
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Hard refresh to ensure everything is loaded
+        const redirectUrl = searchParams?.get?.('redirect') || '/';
+        console.log('🚀 Redirecting to:', redirectUrl);
+        window.location.href = redirectUrl;
       } else {
-        setGeneralError(response.message || 'Login failed');
+        console.error('❌ Invalid response structure:', response);
+        setGeneralError('Login failed: Invalid response from server');
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -116,7 +160,7 @@ export default function LoginPage() {
       
       if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('user')) {
         setEmailError('Invalid email or user not found');
-      } else if (errorMessage.toLowerCase().includes('password')) {
+      } else if (errorMessage.toLowerCase().includes('password') || errorMessage.toLowerCase().includes('credential')) {
         setPasswordError('Invalid password');
       } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
         setGeneralError('Network error. Please check your connection and try again.');
@@ -147,17 +191,6 @@ export default function LoginPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       setShowOTP(true);
       setResendTimer(30);
-      
-      // Start countdown
-      const interval = setInterval(() => {
-        setResendTimer(prev => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     } catch (error) {
       setPhoneError('Failed to send OTP. Please try again.');
     } finally {
@@ -214,6 +247,13 @@ export default function LoginPage() {
             <h2 className="login-title">Welcome Back</h2>
             <p className="login-subtitle">Login to continue your parenting journey</p>
           </div>
+
+          {/* Success Message for Registration */}
+          {justRegistered && (
+            <div className="success-banner">
+              <p>✓ Registration successful! Please login to continue.</p>
+            </div>
+          )}
 
           {/* General Error Message */}
           {generalError && (
