@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     buildActivityPosition: 'bottom-right',
   },
   env: {
-    NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api',
+    NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1',
   },
   images: {
     remotePatterns: [
@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+  // Remove the rewrites section since we're calling the API directly
 };
 
 export default nextConfig;

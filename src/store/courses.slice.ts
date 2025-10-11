@@ -15,11 +15,13 @@ interface Course {
   duration: number;
   category: string;
   price: number;
+  originalPrice?: number;
 }
 
 interface CoursesState {
   courses: Course[];
   featuredCourses: Course[];
+  popularCourses: Course[];
   loading: boolean;
   error: string | null;
   filters: {
@@ -31,6 +33,7 @@ interface CoursesState {
 const initialState: CoursesState = {
   courses: [],
   featuredCourses: [],
+  popularCourses: [],
   loading: false,
   error: null,
   filters: {
@@ -71,6 +74,27 @@ export const fetchFeaturedCourses = createAsyncThunk(
       return coursesData.slice(0, limit) as Course[];
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch featured courses');
+    }
+  }
+);
+
+// Async thunk to fetch popular courses (sorted by student count)
+export const fetchPopularCourses = createAsyncThunk(
+  'courses/fetchPopularCourses',
+  async (limit: number = 6, { rejectWithValue }) => {
+    try {
+      // TODO: Replace with actual API call
+      // const response = await api.get<Course[]>(`/courses/popular?limit=${limit}`);
+      // return response;
+      
+      // Mock API call - sort by student count
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const sortedCourses = [...coursesData]
+        .sort((a, b) => (b.studentCount || 0) - (a.studentCount || 0))
+        .slice(0, limit);
+      return sortedCourses as Course[];
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch popular courses');
     }
   }
 );
@@ -116,6 +140,21 @@ const coursesSlice = createSlice({
         state.featuredCourses = action.payload;
       })
       .addCase(fetchFeaturedCourses.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // Fetch popular courses
+    builder
+      .addCase(fetchPopularCourses.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPopularCourses.fulfilled, (state, action) => {
+        state.loading = false;
+        state.popularCourses = action.payload;
+      })
+      .addCase(fetchPopularCourses.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
