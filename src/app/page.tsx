@@ -7,14 +7,7 @@ export const metadata: Metadata = {
   description: 'Discover evidence-based parenting strategies designed by child behavior experts',
 };
 
-interface RootPageProps {
-  searchParams: Promise<{ view?: string }>;
-}
-
-export default async function RootPage(props: RootPageProps) {
-  // Await searchParams before using it
-  const searchParams = await props.searchParams;
-
+export default async function RootPage() {
   // Check authentication on server
   const authenticated = await isAuthenticated();
 
