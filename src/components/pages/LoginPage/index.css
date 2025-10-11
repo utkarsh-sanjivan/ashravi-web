@@ -57,6 +57,23 @@
   opacity: 0.7;
 }
 
+/* Error Banner */
+.error-banner {
+  padding: 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.error-banner p {
+  color: #ef4444;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin: 0;
+  text-align: center;
+}
+
 .method-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -81,6 +98,11 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.method-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .method-btn.active {
@@ -134,15 +156,35 @@
   opacity: 1;
 }
 
-.phone-input-group {
+.password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+/* Phone Input Group */
+.phone-field-group {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.phone-group-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.phone-inputs {
+  display: grid;
+  grid-template-columns: 140px 1fr;
   gap: 1rem;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .country-code-select {
-  width: 120px;
-  padding: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   background-color: var(--color-bg);
@@ -150,10 +192,32 @@
   font-size: 1rem;
   cursor: pointer;
   outline: none;
+  transition: all 0.2s ease;
 }
 
 .country-code-select:focus {
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.country-code-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.phone-number-input {
+  flex: 1;
+}
+
+.phone-number-input .input-label {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .phone-inputs {
+    grid-template-columns: 110px 1fr;
+    gap: 0.75rem;
+  }
 }
 
 .resend-timer {
@@ -172,10 +236,16 @@
   text-align: center;
   width: 100%;
   padding: 0.5rem;
+  font-size: 0.9375rem;
 }
 
 .resend-button:hover {
   text-decoration: underline;
+}
+
+.resend-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .divider {

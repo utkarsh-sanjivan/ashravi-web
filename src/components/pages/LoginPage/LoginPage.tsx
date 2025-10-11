@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Input from '@/components/atoms/Input';
@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [generalError, setGeneralError] = useState('');
 
   // Phone state (for future implementation)
   const [countryCode, setCountryCode] = useState('+91');
@@ -35,6 +36,22 @@ export default function LoginPage() {
   const [otpError, setOtpError] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
 
+  // Check if user is already logged in
+  useEffect(() => {
+    if (authService.isAuthenticated()) {
+      router.push('/');
+    }
+  }, [router]);
+
+  // Resend timer effect
+  useEffect(() => {
+    if (resendTimer === 0) return;
+    const interval = setInterval(() => {
+      setResendTimer(prev => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
   const validateEmail = (email: string) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
@@ -42,24 +59,32 @@ export default function LoginPage() {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
     setEmailError('');
     setPasswordError('');
+    setGeneralError('');
 
     // Validation
+    let hasError = false;
+
     if (!email) {
       setEmailError('Email is required');
-      return;
-    }
-    if (!validateEmail(email)) {
+      hasError = true;
+    } else if (!validateEmail(email)) {
       setEmailError('Please enter a valid email');
-      return;
+      hasError = true;
     }
+
     if (!password) {
       setPasswordError('Password is required');
-      return;
-    }
-    if (password.length < 6) {
+      hasError = true;
+    } else if (password.length < 6) {
       setPasswordError('Password must be at least 6 characters');
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -74,17 +99,30 @@ export default function LoginPage() {
 
       if (response.success) {
         // Store access token in cookie for server-side access
-        document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60; // 30 days or 7 days
+        document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
         
         // Redirect to homepage
         router.push('/');
         router.refresh();
       } else {
-        setEmailError(response.message || 'Login failed');
+        setGeneralError(response.message || 'Login failed');
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      setEmailError(error.message || 'An error occurred. Please try again.');
+      
+      // Handle specific error messages
+      const errorMessage = error.message || 'An error occurred. Please try again.';
+      
+      if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('user')) {
+        setEmailError('Invalid email or user not found');
+      } else if (errorMessage.toLowerCase().includes('password')) {
+        setPasswordError('Invalid password');
+      } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
+        setGeneralError('Network error. Please check your connection and try again.');
+      } else {
+        setGeneralError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -141,6 +179,8 @@ export default function LoginPage() {
     try {
       // TODO: Implement actual OTP verification when server supports it
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For now, redirect to homepage
       router.push('/');
     } catch (error) {
       setOtpError('Invalid OTP. Please try again.');
@@ -175,12 +215,20 @@ export default function LoginPage() {
             <p className="login-subtitle">Login to continue your parenting journey</p>
           </div>
 
+          {/* General Error Message */}
+          {generalError && (
+            <div className="error-banner">
+              <p>{generalError}</p>
+            </div>
+          )}
+
           {/* Method Toggle */}
           <div className="method-toggle">
             <button
               type="button"
               className={`method-btn ${loginMethod === 'email' ? 'active' : ''}`}
               onClick={() => setLoginMethod('email')}
+              disabled={isLoading}
             >
               <MailIcon className="method-icon" />
               Email
@@ -189,6 +237,7 @@ export default function LoginPage() {
               type="button"
               className={`method-btn ${loginMethod === 'phone' ? 'active' : ''}`}
               onClick={() => setLoginMethod('phone')}
+              disabled={isLoading}
             >
               <PhoneIcon className="method-icon" />
               Phone
@@ -209,6 +258,7 @@ export default function LoginPage() {
                 leftIcon={<MailIcon style={{ width: 20, height: 20 }} />}
                 required
                 fullWidth
+                disabled={isLoading}
               />
 
               <Input
@@ -225,6 +275,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="password-toggle"
+                    disabled={isLoading}
                   >
                     {showPassword ? (
                       <EyeOffIcon style={{ width: 20, height: 20 }} />
@@ -235,6 +286,7 @@ export default function LoginPage() {
                 }
                 required
                 fullWidth
+                disabled={isLoading}
               />
 
               <div className="form-options">
@@ -243,6 +295,7 @@ export default function LoginPage() {
                   label="Remember me"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={isLoading}
                 />
                 <Link href="/auth/forgot-password" className="forgot-link">
                   Forgot password?
@@ -264,27 +317,34 @@ export default function LoginPage() {
           {/* Phone/OTP Form */}
           {loginMethod === 'phone' && !showOTP && (
             <div className="login-form">
-              <div className="phone-input-group">
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="country-code-select"
-                >
-                  <option value="+91">🇮🇳 +91</option>
-                  <option value="+1">🇺🇸 +1</option>
-                  <option value="+44">🇬🇧 +44</option>
-                  <option value="+61">🇦🇺 +61</option>
-                </select>
-                <Input
-                  id="phone"
-                  type="tel"
-                  label="Phone Number"
-                  placeholder="Enter your phone number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                  error={phoneError}
-                  fullWidth
-                />
+              <div className="phone-field-group">
+                <label className="phone-group-label">Phone Number *</label>
+                <div className="phone-inputs">
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="country-code-select"
+                    disabled={isLoading}
+                  >
+                    <option value="+91">🇮🇳 +91</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+61">🇦🇺 +61</option>
+                  </select>
+                  <div className="phone-number-input">
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                      error={phoneError}
+                      leftIcon={<PhoneIcon style={{ width: 20, height: 20 }} />}
+                      fullWidth
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
               </div>
 
               <Button
@@ -292,10 +352,10 @@ export default function LoginPage() {
                 variant="primary"
                 size="lg"
                 onClick={handleSendOTP}
-                disabled={isLoading}
+                loading={isLoading}
                 className="w-full"
               >
-                {isLoading ? 'Sending...' : 'Send OTP'}
+                Send OTP
               </Button>
             </div>
           )}
@@ -314,16 +374,17 @@ export default function LoginPage() {
                 helperText={`OTP sent to ${countryCode} ${phoneNumber}`}
                 maxLength={6}
                 fullWidth
+                disabled={isLoading}
               />
 
               <Button
                 type="submit"
                 variant="primary"
                 size="lg"
-                disabled={isLoading}
+                loading={isLoading}
                 className="w-full"
               >
-                {isLoading ? 'Verifying...' : 'Verify OTP'}
+                Verify OTP
               </Button>
 
               {resendTimer > 0 ? (
