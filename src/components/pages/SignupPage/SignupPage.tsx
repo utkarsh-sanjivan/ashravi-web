@@ -46,17 +46,10 @@ export default function SignupPage() {
   // Step 2 - Parent Profile Data
   const [occupation, setOccupation] = useState('');
   const [city, setCity] = useState('');
-  const [economicStatus, setEconomicStatus] = useState('Middle Income');
 
   // Step 2 Errors
   const [occupationError, setOccupationError] = useState('');
   const [cityError, setCityError] = useState('');
-  const [economicStatusError, setEconomicStatusError] = useState('');
-
-  // Step 3 - Verification
-  const [otp, setOtp] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [resendTimer, setResendTimer] = useState(0);
 
   // Password validation states
   const hasMinLength = password.length >= 8;
@@ -70,15 +63,6 @@ export default function SignupPage() {
 
   // Util function
   const validateEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
-
-  // Effects for resend timer
-  useEffect(() => {
-    if (resendTimer === 0) return;
-    const interval = setInterval(() => {
-      setResendTimer(prev => (prev <= 1 ? 0 : prev - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [resendTimer]);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -140,7 +124,6 @@ export default function SignupPage() {
     e.preventDefault();
     setOccupationError('');
     setCityError('');
-    setEconomicStatusError('');
 
     let hasError = false;
 
@@ -151,11 +134,6 @@ export default function SignupPage() {
 
     if (!city.trim()) {
       setCityError('City is required');
-      hasError = true;
-    }
-
-    if (!economicStatus) {
-      setEconomicStatusError('Please select your economic status');
       hasError = true;
     }
 
@@ -172,8 +150,7 @@ export default function SignupPage() {
         email: email,
         phoneNumber: `${countryCode}${phoneNumber}`,
         occupation: occupation,
-        city: city,
-        economicStatus: economicStatus,
+        city: city
       });
 
       const response = await authService.register({
@@ -182,8 +159,7 @@ export default function SignupPage() {
         phoneNumber: `${countryCode}${phoneNumber}`,
         password: password,
         occupation: occupation,
-        city: city,
-        economicStatus: economicStatus,
+        city: city
       });
 
       console.log('📥 Full registration response:', response);
@@ -241,34 +217,6 @@ export default function SignupPage() {
       } else {
         setOccupationError(errorMessage);
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Step 3 submit handler (OTP verification - if needed in future)
-  const handleVerificationComplete = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setOtpError('');
-
-    if (otp.length !== 6) {
-      setOtpError('Please enter a valid 6-digit code');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // TODO: Implement OTP verification API when available
-      // For now, just redirect to welcome page
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to welcome page
-      router.push('/auth/welcome');
-      router.refresh();
-    } catch (error: any) {
-      console.error('Verification error:', error);
-      setOtpError(error.message || 'Verification failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -496,23 +444,6 @@ export default function SignupPage() {
                 required
                 fullWidth
               />
-              
-              <div className="form-field">
-                <label htmlFor="economicStatus" className="select-label">Economic Status *</label>
-                <select
-                  id="economicStatus"
-                  value={economicStatus}
-                  onChange={e => setEconomicStatus(e.target.value)}
-                  className={`select-field ${economicStatusError ? 'error' : ''}`}
-                  required
-                >
-                  <option value="">Select</option>
-                  <option value="Lower Income">Lower Income</option>
-                  <option value="Middle Income">Middle Income</option>
-                  <option value="Upper Income">Upper Income</option>
-                </select>
-                {economicStatusError && <div className="input-error">{economicStatusError}</div>}
-              </div>
 
               <div className="form-actions">
                 <Button 
@@ -533,64 +464,6 @@ export default function SignupPage() {
                   loading={isLoading}
                 >
                   Continue
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {/* Step 3: Verification */}
-          {currentStep === 3 && (
-            <form onSubmit={handleVerificationComplete} className="signup-form">
-              <div className="verification-info">
-                <p>We've sent a verification code to <strong>{email}</strong></p>
-              </div>
-
-              <Input
-                id="otp"
-                label="Verification Code"
-                value={otp}
-                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                error={otpError}
-                placeholder="Enter 6-digit code"
-                maxLength={6}
-                required
-                fullWidth
-              />
-              
-              <div className="resend-group">
-                {resendTimer > 0 ? (
-                  <p className="resend-timer">Resend code in {resendTimer} seconds</p>
-                ) : (
-                  <button 
-                    type="button" 
-                    className="resend-button" 
-                    onClick={() => setResendTimer(30)}
-                    disabled={isLoading}
-                  >
-                    Resend Code
-                  </button>
-                )}
-              </div>
-
-              <div className="form-actions">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="lg" 
-                  className="w-full" 
-                  onClick={() => setCurrentStep(2)}
-                  disabled={isLoading}
-                >
-                  Back
-                </Button>
-                <Button 
-                  type="submit" 
-                  variant="primary" 
-                  size="lg" 
-                  className="w-full" 
-                  loading={isLoading}
-                >
-                  Complete Signup
                 </Button>
               </div>
             </form>

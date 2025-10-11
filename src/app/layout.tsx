@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Providers from './providers';
-import AuthToggle from '@/components/dev/AuthToggle';
 import '@/styles/globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-geist-sans' });
@@ -66,7 +65,6 @@ export default function RootLayout({
       </head>
       <body className={inter.variable}>
         <Providers>{children}</Providers>
-        <AuthToggle />
       </body>
     </html>
   );
