@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Input from '@/components/atoms/Input';
 import Button from '@/components/atoms/Button';
 import Checkbox from '@/components/atoms/Checkbox';
@@ -15,10 +15,14 @@ type LoginMethod = 'email' | 'phone';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user just registered
+  const justRegistered = searchParams.get('registered') === 'true';
 
   // Email/Password state
   const [email, setEmail] = useState('');
@@ -102,8 +106,11 @@ export default function LoginPage() {
         const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60; // 30 days or 7 days
         document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
         
-        // Redirect to homepage
-        router.push('/');
+        // Check if there's a redirect URL
+        const redirectUrl = searchParams.get('redirect') || '/';
+        
+        // Redirect to the intended page or homepage
+        router.push(redirectUrl);
         router.refresh();
       } else {
         setGeneralError(response.message || 'Login failed');
@@ -116,7 +123,7 @@ export default function LoginPage() {
       
       if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('user')) {
         setEmailError('Invalid email or user not found');
-      } else if (errorMessage.toLowerCase().includes('password')) {
+      } else if (errorMessage.toLowerCase().includes('password') || errorMessage.toLowerCase().includes('credential')) {
         setPasswordError('Invalid password');
       } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
         setGeneralError('Network error. Please check your connection and try again.');
@@ -147,17 +154,6 @@ export default function LoginPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       setShowOTP(true);
       setResendTimer(30);
-      
-      // Start countdown
-      const interval = setInterval(() => {
-        setResendTimer(prev => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     } catch (error) {
       setPhoneError('Failed to send OTP. Please try again.');
     } finally {
@@ -214,6 +210,13 @@ export default function LoginPage() {
             <h2 className="login-title">Welcome Back</h2>
             <p className="login-subtitle">Login to continue your parenting journey</p>
           </div>
+
+          {/* Success Message for Registration */}
+          {justRegistered && (
+            <div className="success-banner">
+              <p>✓ Registration successful! Please login to continue.</p>
+            </div>
+          )}
 
           {/* General Error Message */}
           {generalError && (

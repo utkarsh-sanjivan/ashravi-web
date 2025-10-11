@@ -309,3 +309,36 @@
   opacity: 1;
   text-decoration: underline;
 }
+
+.success-banner {
+  padding: 1rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.success-banner p {
+  color: #10b981;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin: 0;
+  text-align: center;
+}
+
+/* Error Banner */
+.error-banner {
+  padding: 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.error-banner p {
+  color: #ef4444;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin: 0;
+  text-align: center;
+}

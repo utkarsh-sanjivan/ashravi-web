@@ -3,7 +3,7 @@ import { CheckmarkIcon } from '@/components/icons';
 import './index.css';
 
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  label?: string;
+  label?: string | React.ReactNode; // Changed to accept both string and ReactNode
   error?: string;
 }
 

@@ -80,8 +80,16 @@ export default function SignupPage() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  useEffect(() => {
+    // Check if user is already logged in
+    if (authService.isAuthenticated()) {
+      router.push('/');
+      router.refresh();
+    }
+  }, [router]);
+
   // Step 1 submit handler
-  const handleStep1Submit = e => {
+  const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
     setFullNameError('');
     setEmailError('');
@@ -128,7 +136,7 @@ export default function SignupPage() {
   };
 
   // Step 2 submit handler with API call
-  const handleStep2Submit = async (e) => {
+  const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setOccupationError('');
     setCityError('');
@@ -170,12 +178,9 @@ export default function SignupPage() {
       });
 
       if (response.success) {
-        // Store access token in cookie
-        document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-        
-        // Move to step 3 for verification
-        setCurrentStep(3);
-        setResendTimer(30);
+        // Don't store tokens, just redirect to login
+        // Redirect to login page with success message
+        router.push('/auth/login?registered=true');
       } else {
         // Show error in occupation field (or you can show a general error)
         setOccupationError(response.message || 'Registration failed');
@@ -201,8 +206,9 @@ export default function SignupPage() {
     }
   };
 
+
   // Step 3 submit handler (OTP verification - if needed in future)
-  const handleVerificationComplete = async (e) => {
+  const handleVerificationComplete = async (e: React.FormEvent) => {
     e.preventDefault();
     setOtpError('');
 
@@ -270,11 +276,6 @@ export default function SignupPage() {
             <div className={`step ${currentStep >= 2 ? 'active' : ''}`}>
               <div className="step-badge">2</div>
               <div className="step-label">Profile</div>
-            </div>
-            <div className="step-line" />
-            <div className={`step ${currentStep === 3 ? 'active' : ''}`}>
-              <div className="step-badge">3</div>
-              <div className="step-label">Verify</div>
             </div>
           </div>
 
