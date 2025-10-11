@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/atoms/ThemeToggle';
 import Button from '@/components/atoms/Button';
 import SearchBar from '@/components/molecules/SearchBar';
 import { MenuIcon, CloseIcon } from '@/components/icons';
+import { useAuth } from '@/hooks/useAuth';
 import './index.css';
 
 export interface PublicNavbarProps {
@@ -22,6 +23,8 @@ export default function PublicNavbar({
 }: PublicNavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { logout, isLoading: isLoggingOut, getUser } = useAuth();
+  const user = getUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,6 +34,10 @@ export default function PublicNavbar({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   const navbarClass = `public-navbar ${isScrolled ? 'scrolled' : ''} ${transparent && !isScrolled ? 'transparent' : ''}`;
 
@@ -74,7 +81,7 @@ export default function PublicNavbar({
           <div className="navbar-actions">
             <div className="desktop-actions">
               <ThemeToggle />
-              {!isAuthenticated && (
+              {!isAuthenticated ? (
                 <>
                   <Link href="/auth/login">
                     <Button variant="outline" size="sm">Login</Button>
@@ -82,6 +89,20 @@ export default function PublicNavbar({
                   <Link href="/auth/signup">
                     <Button variant="primary" size="sm">Get Started Free</Button>
                   </Link>
+                </>
+              ) : (
+                <>
+                  {user && (
+                    <span className="user-name">Hi, {user.name.split(' ')[0]}</span>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    {isLoggingOut ? 'Logging out...' : 'Logout'}
+                  </Button>
                 </>
               )}
             </div>
@@ -159,7 +180,7 @@ export default function PublicNavbar({
                 Contact
               </Link>
             </div>
-            {!isAuthenticated && (
+            {!isAuthenticated ? (
               <div className="mobile-menu-actions">
                 <Link 
                   href="/auth/login"
@@ -177,6 +198,24 @@ export default function PublicNavbar({
                     Get Started Free
                   </Button>
                 </Link>
+              </div>
+            ) : (
+              <div className="mobile-menu-actions">
+                {user && (
+                  <div className="mobile-user-info">
+                    <span>{user.name}</span>
+                    <span className="user-email">{user.email}</span>
+                  </div>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="md"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full"
+                >
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
+                </Button>
               </div>
             )}
           </div>

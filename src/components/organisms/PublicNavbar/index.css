@@ -371,3 +371,30 @@
 .w-full {
   width: 100%;
 }
+
+.user-name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.mobile-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mobile-user-info span {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.user-email {
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  opacity: 0.7;
+}
+

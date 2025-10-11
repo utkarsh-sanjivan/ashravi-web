@@ -15,3 +15,5 @@ export { default as UserIcon } from './UserIcon';
 export { default as GoogleIcon } from './GoogleIcon';
 export { default as FacebookIcon } from './FacebookIcon';
 export { default as AppleIcon } from './AppleIcon';
+export { default as CheckCircleIcon } from './CheckCircleIcon';
+export { default as XCircleIcon } from './XCircleIcon';

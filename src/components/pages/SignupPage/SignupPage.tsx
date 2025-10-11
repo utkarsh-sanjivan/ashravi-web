@@ -7,6 +7,8 @@ import Input from '@/components/atoms/Input';
 import Button from '@/components/atoms/Button';
 import Checkbox from '@/components/atoms/Checkbox';
 import SocialLoginButton from '@/components/molecules/SocialLoginButton';
+import PasswordValidation from '@/components/molecules/PasswordValidation';
+import authService from '@/services/authService';
 import { 
   MailIcon, 
   PhoneIcon, 
@@ -24,7 +26,7 @@ export default function SignupPage() {
   // Step 1 - Basic Information
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,7 +38,7 @@ export default function SignupPage() {
   // Step 1 Errors
   const [fullNameError, setFullNameError] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
+  const [phoneNumberError, setPhoneNumberError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [termsError, setTermsError] = useState('');
@@ -44,7 +46,7 @@ export default function SignupPage() {
   // Step 2 - Parent Profile Data
   const [occupation, setOccupation] = useState('');
   const [city, setCity] = useState('');
-  const [economicStatus, setEconomicStatus] = useState('middle');
+  const [economicStatus, setEconomicStatus] = useState('Middle Income');
 
   // Step 2 Errors
   const [occupationError, setOccupationError] = useState('');
@@ -55,6 +57,16 @@ export default function SignupPage() {
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
+
+  // Password validation states
+  const hasMinLength = password.length >= 8;
+  const hasLowercase = /[a-z]/.test(password);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+
+  const isPasswordValid = hasMinLength && hasLowercase && hasUppercase && hasNumber && hasSpecialChar;
 
   // Util function
   const validateEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
@@ -73,7 +85,7 @@ export default function SignupPage() {
     e.preventDefault();
     setFullNameError('');
     setEmailError('');
-    setPhoneError('');
+    setPhoneNumberError('');
     setPasswordError('');
     setConfirmPasswordError('');
     setTermsError('');
@@ -81,32 +93,32 @@ export default function SignupPage() {
     let hasError = false;
 
     if (!fullName.trim()) {
-      setFullNameError('Full Name is required.');
+      setFullNameError('Full Name is required');
       hasError = true;
     }
 
     if (!email || !validateEmail(email)) {
-      setEmailError('Valid Email is required.');
+      setEmailError('Valid Email is required');
       hasError = true;
     }
 
-    if (!phone || phone.length < 10) {
-      setPhoneError('Valid Phone number is required.');
+    if (!phoneNumber || phoneNumber.length < 10) {
+      setPhoneNumberError('Valid Phone number is required');
       hasError = true;
     }
 
-    if (password.length < 8) {
-      setPasswordError('Password should be at least 8 characters.');
+    if (!isPasswordValid) {
+      setPasswordError('Password must meet all requirements');
       hasError = true;
     }
 
-    if (confirmPassword !== password) {
-      setConfirmPasswordError('Passwords do not match.');
+    if (!passwordsMatch) {
+      setConfirmPasswordError('Passwords do not match');
       hasError = true;
     }
 
     if (!agreeTerms || !agreePrivacy) {
-      setTermsError('You must agree to Terms and Privacy Policy.');
+      setTermsError('You must agree to Terms and Privacy Policy');
       hasError = true;
     }
 
@@ -115,8 +127,8 @@ export default function SignupPage() {
     }
   };
 
-  // Step 2 submit handler
-  const handleStep2Submit = e => {
+  // Step 2 submit handler with API call
+  const handleStep2Submit = async (e) => {
     e.preventDefault();
     setOccupationError('');
     setCityError('');
@@ -125,41 +137,109 @@ export default function SignupPage() {
     let hasError = false;
 
     if (!occupation.trim()) {
-      setOccupationError('Occupation is required.');
+      setOccupationError('Occupation is required');
       hasError = true;
     }
 
     if (!city.trim()) {
-      setCityError('City is required.');
+      setCityError('City is required');
       hasError = true;
     }
 
     if (!economicStatus) {
-      setEconomicStatusError('Please select your economic status.');
+      setEconomicStatusError('Please select your economic status');
       hasError = true;
     }
 
-    if (!hasError) {
-      setCurrentStep(3);
-      setResendTimer(30);
+    if (hasError) {
+      return;
+    }
+
+    // Call API to register user with all details
+    setIsLoading(true);
+
+    try {
+      const response = await authService.register({
+        name: fullName,
+        email: email,
+        phoneNumber: `${countryCode}${phoneNumber}`,
+        password: password,
+        occupation: occupation,
+        city: city,
+        economicStatus: economicStatus,
+      });
+
+      if (response.success) {
+        // Store access token in cookie
+        document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        
+        // Move to step 3 for verification
+        setCurrentStep(3);
+        setResendTimer(30);
+      } else {
+        // Show error in occupation field (or you can show a general error)
+        setOccupationError(response.message || 'Registration failed');
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      
+      // Handle specific error messages
+      const errorMessage = error.message || 'Registration failed. Please try again.';
+      
+      // Show error based on field
+      if (errorMessage.toLowerCase().includes('email')) {
+        setEmailError(errorMessage);
+        setCurrentStep(1); // Go back to step 1
+      } else if (errorMessage.toLowerCase().includes('phone')) {
+        setPhoneNumberError(errorMessage);
+        setCurrentStep(1); // Go back to step 1
+      } else {
+        setOccupationError(errorMessage);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Step 3 submit handler (OTP verify)
-  const handleOtpSubmit = e => {
+  // Step 3 submit handler (OTP verification - if needed in future)
+  const handleVerificationComplete = async (e) => {
     e.preventDefault();
     setOtpError('');
 
     if (otp.length !== 6) {
-      setOtpError('Please enter a valid 6-digit code.');
+      setOtpError('Please enter a valid 6-digit code');
       return;
     }
 
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      // TODO: Implement OTP verification API when available
+      // For now, just redirect to welcome page
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Redirect to welcome page
+      router.push('/auth/welcome');
+      router.refresh();
+    } catch (error: any) {
+      console.error('Verification error:', error);
+      setOtpError(error.message || 'Verification failed. Please try again.');
+    } finally {
       setIsLoading(false);
-      router.push('/');
-    }, 1000);
+    }
+  };
+
+  const handleSocialSignup = async (provider: 'google' | 'facebook' | 'apple') => {
+    setIsLoading(true);
+    try {
+      // TODO: Implement OAuth flow when server supports it
+      console.log(`Signup with ${provider}`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Social signup failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -169,7 +249,9 @@ export default function SignupPage() {
 
           {/* Ashravi Header and Description */}
           <section className="signup-header">
-            <h1 className="signup-title">Ashravi</h1>
+            <Link href="/" className="logo-link">
+              <h1 className="signup-title">Ashravi</h1>
+            </Link>
             <p className="signup-subtitle">
               Transform Your Parenting Journey with Evidence-Based Strategies
             </p>
@@ -196,6 +278,7 @@ export default function SignupPage() {
             </div>
           </div>
 
+          {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <form onSubmit={handleStep1Submit} className="signup-form">
               <Input
@@ -204,9 +287,11 @@ export default function SignupPage() {
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 error={fullNameError}
+                placeholder="Enter your full name"
                 required
                 fullWidth
               />
+              
               <Input
                 id="email"
                 label="Email"
@@ -214,30 +299,44 @@ export default function SignupPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 error={emailError}
+                placeholder="Enter your email"
+                leftIcon={<MailIcon style={{ width: 20, height: 20 }} />}
                 required
                 fullWidth
               />
-              <div className="phone-group">
-                <select
-                  aria-label="Country code"
-                  value={countryCode}
-                  onChange={e => setCountryCode(e.target.value)}
-                  className="select-field"
-                >
-                  <option value="+91">+91 (India)</option>
-                  <option value="+1">+1 (US)</option>
-                  <option value="+44">+44 (UK)</option>
-                </select>
-                <Input
-                  id="phone"
-                  label="Phone"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  error={phoneError}
-                  required
-                  fullWidth
-                />
+              
+              {/* Phone Input Group */}
+              <div className="phone-field-group">
+                <label className="phone-group-label">Phone Number *</label>
+                <div className="phone-inputs">
+                  <select
+                    id="countryCode"
+                    aria-label="Country code"
+                    value={countryCode}
+                    onChange={e => setCountryCode(e.target.value)}
+                    className="country-code-select"
+                  >
+                    <option value="+91">🇮🇳 +91</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+61">🇦🇺 +61</option>
+                  </select>
+                  
+                  <div className="phone-number-input">
+                    <Input
+                      id="phoneNumber"
+                      value={phoneNumber}
+                      onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                      error={phoneNumberError}
+                      placeholder="Enter phone number"
+                      leftIcon={<PhoneIcon style={{ width: 20, height: 20 }} />}
+                      required
+                      fullWidth
+                    />
+                  </div>
+                </div>
               </div>
+              
               <Input
                 id="password"
                 label="Password"
@@ -245,14 +344,22 @@ export default function SignupPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 error={passwordError}
+                placeholder="Create a password"
+                leftIcon={<LockIcon style={{ width: 20, height: 20 }} />}
                 rightIcon={
                   <button type="button" onClick={() => setShowPassword(s => !s)} className="password-toggle">
-                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    {showPassword ? <EyeOffIcon style={{ width: 20, height: 20 }} /> : <EyeIcon style={{ width: 20, height: 20 }} />}
                   </button>
                 }
                 required
                 fullWidth
               />
+              
+              {/* Password Validation - Show all requirements */}
+              {password.length > 0 && (
+                <PasswordValidation password={password} />
+              )}
+
               <Input
                 id="confirmPassword"
                 label="Confirm Password"
@@ -260,122 +367,60 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 error={confirmPasswordError}
+                placeholder="Re-enter your password"
+                leftIcon={<LockIcon style={{ width: 20, height: 20 }} />}
                 rightIcon={
                   <button type="button" onClick={() => setShowConfirmPassword(s => !s)} className="password-toggle">
-                    {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    {showConfirmPassword ? <EyeOffIcon style={{ width: 20, height: 20 }} /> : <EyeIcon style={{ width: 20, height: 20 }} />}
                   </button>
                 }
                 required
                 fullWidth
               />
+
+              {/* Password Match Validation - Only show match status */}
+              {confirmPassword.length > 0 && (
+                <PasswordValidation 
+                  password={password} 
+                  confirmPassword={confirmPassword}
+                  showConfirmMatchOnly={true}
+                />
+              )}
+
               <div className="terms-group">
                 <Checkbox
                   id="terms"
-                  label={<span>I agree to the <Link href="/terms" target="_blank">Terms of Service</Link></span>}
+                  label={<span>I agree to the <Link href="/terms" target="_blank" className="terms-link">Terms of Service</Link></span>}
                   checked={agreeTerms}
                   onChange={e => setAgreeTerms(e.target.checked)}
                   required
                 />
                 <Checkbox
                   id="privacy"
-                  label={<span>I agree to the <Link href="/privacy" target="_blank">Privacy Policy</Link></span>}
+                  label={<span>I agree to the <Link href="/privacy" target="_blank" className="terms-link">Privacy Policy</Link></span>}
                   checked={agreePrivacy}
                   onChange={e => setAgreePrivacy(e.target.checked)}
                   required
                 />
                 {termsError && <div className="input-error">{termsError}</div>}
               </div>
-              <Button type="submit" variant="primary" size="lg" className="w-full">
+              
+              <Button type="submit" variant="primary" size="lg" className="w-full" loading={isLoading}>
                 Continue
               </Button>
-            </form>
-          )}
 
-          {currentStep === 2 && (
-            <form onSubmit={handleStep2Submit} className="signup-form">
-              <Input
-                id="occupation"
-                label="Occupation"
-                value={occupation}
-                onChange={e => setOccupation(e.target.value)}
-                error={occupationError}
-                required
-                fullWidth
-              />
-              <Input
-                id="city"
-                label="City"
-                value={city}
-                onChange={e => setCity(e.target.value)}
-                error={cityError}
-                required
-                fullWidth
-              />
-              <label htmlFor="economicStatus" className="select-label">Economic Status</label>
-              <select
-                id="economicStatus"
-                value={economicStatus}
-                onChange={e => setEconomicStatus(e.target.value)}
-                className={`select-field ${economicStatusError ? 'error' : ''}`}
-                required
-              >
-                <option value="">Select</option>
-                <option value="lower">Lower</option>
-                <option value="middle">Middle</option>
-                <option value="upper middle">Upper Middle</option>
-                <option value="upper">Upper</option>
-              </select>
-              {economicStatusError && <div className="input-error">{economicStatusError}</div>}
-
-              <div className="form-actions">
-                <Button type="button" variant="outline" size="lg" className="w-full" onClick={() => setCurrentStep(1)}>Back</Button>
-                <Button type="submit" variant="primary" size="lg" className="w-full">Continue</Button>
-              </div>
-            </form>
-          )}
-
-          {currentStep === 3 && (
-            <form onSubmit={handleOtpSubmit} className="signup-form">
-              <Input
-                id="otp"
-                label="Verification Code"
-                value={otp}
-                onChange={e => setOtp(e.target.value)}
-                error={otpError}
-                maxLength={6}
-                required
-                fullWidth
-              />
-              <div className="resend-group">
-                {resendTimer > 0 ? (
-                  <p>Resend code in {resendTimer} seconds</p>
-                ) : (
-                  <button type="button" className="resend-button" onClick={() => setResendTimer(30)}>Resend Code</button>
-                )}
-              </div>
-
-              <div className="form-actions">
-                <Button type="button" variant="outline" size="lg" className="w-full" onClick={() => setCurrentStep(2)}>Back</Button>
-                <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Verifying...' : 'Complete Signup'}
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {/* Social Signup at Step 1 only */}
-          {currentStep === 1 && (
-            <>
+              {/* Divider */}
               <div className="divider">
                 <span className="divider-line" />
                 <span className="divider-text">OR SIGN UP WITH</span>
                 <span className="divider-line" />
               </div>
 
+              {/* Social Signup */}
               <div className="social-signup">
-                <SocialLoginButton provider="google" onClick={() => {}} />
-                <SocialLoginButton provider="facebook" onClick={() => {}} />
-                <SocialLoginButton provider="apple" onClick={() => {}} />
+                <SocialLoginButton provider="google" onClick={() => handleSocialSignup('google')} disabled={isLoading} />
+                <SocialLoginButton provider="facebook" onClick={() => handleSocialSignup('facebook')} disabled={isLoading} />
+                <SocialLoginButton provider="apple" onClick={() => handleSocialSignup('apple')} disabled={isLoading} />
               </div>
 
               <div className="signup-footer">
@@ -384,7 +429,131 @@ export default function SignupPage() {
                   <Link href="/auth/login" className="footer-link">Login</Link>
                 </p>
               </div>
-            </>
+            </form>
+          )}
+
+          {/* Step 2: Profile Setup */}
+          {currentStep === 2 && (
+            <form onSubmit={handleStep2Submit} className="signup-form">
+              <Input
+                id="occupation"
+                label="Occupation"
+                value={occupation}
+                onChange={e => setOccupation(e.target.value)}
+                error={occupationError}
+                placeholder="Enter your occupation"
+                required
+                fullWidth
+              />
+              
+              <Input
+                id="city"
+                label="City"
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                error={cityError}
+                placeholder="Enter your city"
+                required
+                fullWidth
+              />
+              
+              <div className="form-field">
+                <label htmlFor="economicStatus" className="select-label">Economic Status *</label>
+                <select
+                  id="economicStatus"
+                  value={economicStatus}
+                  onChange={e => setEconomicStatus(e.target.value)}
+                  className={`select-field ${economicStatusError ? 'error' : ''}`}
+                  required
+                >
+                  <option value="">Select</option>
+                  <option value="Lower Income">Lower Income</option>
+                  <option value="Middle Income">Middle Income</option>
+                  <option value="Upper Income">Upper Income</option>
+                </select>
+                {economicStatusError && <div className="input-error">{economicStatusError}</div>}
+              </div>
+
+              <div className="form-actions">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full" 
+                  onClick={() => setCurrentStep(1)}
+                  disabled={isLoading}
+                >
+                  Back
+                </Button>
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  size="lg" 
+                  className="w-full" 
+                  loading={isLoading}
+                >
+                  Continue
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Step 3: Verification */}
+          {currentStep === 3 && (
+            <form onSubmit={handleVerificationComplete} className="signup-form">
+              <div className="verification-info">
+                <p>We've sent a verification code to <strong>{email}</strong></p>
+              </div>
+
+              <Input
+                id="otp"
+                label="Verification Code"
+                value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                error={otpError}
+                placeholder="Enter 6-digit code"
+                maxLength={6}
+                required
+                fullWidth
+              />
+              
+              <div className="resend-group">
+                {resendTimer > 0 ? (
+                  <p className="resend-timer">Resend code in {resendTimer} seconds</p>
+                ) : (
+                  <button 
+                    type="button" 
+                    className="resend-button" 
+                    onClick={() => setResendTimer(30)}
+                    disabled={isLoading}
+                  >
+                    Resend Code
+                  </button>
+                )}
+              </div>
+
+              <div className="form-actions">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full" 
+                  onClick={() => setCurrentStep(2)}
+                  disabled={isLoading}
+                >
+                  Back
+                </Button>
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  size="lg" 
+                  className="w-full" 
+                  loading={isLoading}
+                >
+                  Complete Signup
+                </Button>
+              </div>
+            </form>
           )}
         </div>
       </div>

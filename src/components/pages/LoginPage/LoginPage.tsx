@@ -8,6 +8,7 @@ import Button from '@/components/atoms/Button';
 import Checkbox from '@/components/atoms/Checkbox';
 import SocialLoginButton from '@/components/molecules/SocialLoginButton';
 import { MailIcon, PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from '@/components/icons';
+import authService from '@/services/authService';
 import './index.css';
 
 type LoginMethod = 'email' | 'phone';
@@ -25,7 +26,7 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  // Phone state
+  // Phone state (for future implementation)
   const [countryCode, setCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [phoneError, setPhoneError] = useState('');
@@ -65,24 +66,25 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: 'user1',
-          name: 'Test User',
-          email: email 
-        }),
+      // Call the real login API
+      const response = await authService.login({
+        email,
+        password,
       });
 
-      if (response.ok) {
+      if (response.success) {
+        // Store access token in cookie for server-side access
+        document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        
+        // Redirect to homepage
         router.push('/');
+        router.refresh();
       } else {
-        const data = await response.json();
-        setEmailError(data.error || 'Login failed');
+        setEmailError(response.message || 'Login failed');
       }
-    } catch (error) {
-      setEmailError('An error occurred. Please try again.');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setEmailError(error.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +105,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement actual OTP sending
+      // TODO: Implement actual OTP sending when server supports it
       await new Promise(resolve => setTimeout(resolve, 1000));
       setShowOTP(true);
       setResendTimer(30);
@@ -137,7 +139,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement actual OTP verification
+      // TODO: Implement actual OTP verification when server supports it
       await new Promise(resolve => setTimeout(resolve, 1000));
       router.push('/');
     } catch (error) {
@@ -150,7 +152,7 @@ export default function LoginPage() {
   const handleSocialLogin = async (provider: 'google' | 'facebook' | 'apple') => {
     setIsLoading(true);
     try {
-      // TODO: Implement OAuth flow
+      // TODO: Implement OAuth flow when server supports it
       console.log(`Login with ${provider}`);
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
@@ -251,10 +253,10 @@ export default function LoginPage() {
                 type="submit"
                 variant="primary"
                 size="lg"
-                disabled={isLoading}
+                loading={isLoading}
                 className="w-full"
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                Login
               </Button>
             </form>
           )}
