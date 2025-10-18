@@ -3,20 +3,9 @@ import api from '@/lib/api';
 
 // Import mock data as fallback
 import coursesData from '@/mock-data/courses.json';
+import { Course } from '@/types';
 
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  instructor?: string;
-  rating?: number;
-  studentCount?: number;
-  duration: number;
-  category: string;
-  price: number;
-  originalPrice?: number;
-}
+
 
 interface CoursesState {
   courses: Course[];
@@ -90,7 +79,7 @@ export const fetchPopularCourses = createAsyncThunk(
       // Mock API call - sort by student count
       await new Promise(resolve => setTimeout(resolve, 500));
       const sortedCourses = [...coursesData]
-        .sort((a, b) => (b.studentCount || 0) - (a.studentCount || 0))
+        .sort((a, b) => (b.enrollmentCount || 0) - (a.enrollmentCount || 0))
         .slice(0, limit);
       return sortedCourses as Course[];
     } catch (error: any) {

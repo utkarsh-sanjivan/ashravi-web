@@ -1,188 +1,198 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
+/**
+ * API Client for Ashravi Web
+ * 
+ * This module provides a centralized API client for all HTTP requests.
+ * Uses mock data until backend APIs are integrated.
+ */
 
-interface RequestOptions extends RequestInit {
-  params?: Record<string, string>;
-  requiresAuth?: boolean;
-}
+import type { 
+  Course, 
+  PaginatedResponse 
+} from '@/types';
+
+import { mockCourses } from '@/mock-data/courses';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
 class APIClient {
   private baseURL: string;
 
-  constructor(baseURL: string) {
-    this.baseURL = baseURL;
+  constructor() {
+    this.baseURL = API_BASE_URL;
   }
 
-  private async getAuthToken(): Promise<string | null> {
-    if (typeof window === 'undefined') {
-      // Server-side: Get from cookies via headers
-      const { cookies } = await import('next/headers');
-      const cookieStore = await cookies();
-      const token = cookieStore.get('accessToken');
-      return token?.value || null;
-    }
-    
-    // Client-side: Get from localStorage
-    return localStorage.getItem('accessToken') || null;
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options: RequestOptions = {}
-  ): Promise<T> {
-    const { params, requiresAuth = false, ...fetchOptions } = options;
-
-    let url = `${this.baseURL}${endpoint}`;
-
-    // Add query parameters
-    if (params) {
-      const queryString = new URLSearchParams(params).toString();
-      url += `?${queryString}`;
-    }
-
-    // Prepare headers - explicitly typed as Record<string, string>
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    // Merge any additional headers from options
-    if (fetchOptions.headers) {
-      const optionHeaders = fetchOptions.headers as Record<string, string>;
-      Object.assign(headers, optionHeaders);
-    }
-
-    // Add authentication token if required
-    if (requiresAuth) {
-      const token = await this.getAuthToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-
-    console.log('🌐 API Request:', {
-      method: fetchOptions.method || 'GET',
-      url,
-      hasAuth: !!headers['Authorization']
+  /**
+   * Generic GET request
+   */
+  async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      credentials: 'include',
+      ...options,
     });
 
-    try {
-      const response = await fetch(url, {
-        ...fetchOptions,
-        headers,
-        credentials: 'include', // Important for cookies
-      });
-
-      console.log('📡 API Response:', {
-        status: response.status,
-        ok: response.ok,
-        url
-      });
-
-      // Handle unauthorized - refresh token or redirect to login
-      if (response.status === 401 && requiresAuth) {
-        // Try to refresh token
-        const refreshed = await this.refreshToken();
-        if (refreshed) {
-          // Retry the original request
-          return this.request<T>(endpoint, options);
-        } else {
-          // Redirect to login
-          if (typeof window !== 'undefined') {
-            window.location.href = '/auth/login';
-          }
-          throw new Error('Unauthorized');
-        }
-      }
-
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-          console.error('❌ API Error Response:', errorData);
-        } catch (e) {
-          console.error('❌ API Error (no JSON):', response.statusText);
-          errorData = { message: response.statusText };
-        }
-        
-        throw new Error(
-          errorData.message || errorData.error || `API Error: ${response.statusText}`
-        );
-      }
-
-      const data = await response.json();
-      console.log('✅ API Success Response:', data);
-      return data as T;
-    } catch (error) {
-      console.error('❌ API Request Error:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
+
+    return response.json() as Promise<T>;
   }
 
-  async get<T>(endpoint: string, options?: RequestOptions): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'GET' });
-  }
-
-  async post<T>(
-    endpoint: string,
-    data?: any,
-    options?: RequestOptions
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...options,
+  /**
+   * Generic POST request
+   */
+  async post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async put<T>(
-    endpoint: string,
-    data?: any,
-    options?: RequestOptions
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: 'include',
       ...options,
-      method: 'PUT',
-      body: JSON.stringify(data),
     });
-  }
 
-  async patch<T>(
-    endpoint: string,
-    data?: any,
-    options?: RequestOptions
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async delete<T>(endpoint: string, options?: RequestOptions): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
-  }
-
-  // Authentication specific methods
-  async refreshToken(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseURL}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (typeof window !== 'undefined' && data.accessToken) {
-          localStorage.setItem('accessToken', data.accessToken);
-        }
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      return false;
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
+
+    return response.json() as Promise<T>;
+  }
+
+  /**
+   * Generic PUT request
+   */
+  async put<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: 'include',
+      ...options,
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  /**
+   * Generic PATCH request
+   */
+  async patch<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: 'include',
+      ...options,
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  /**
+   * Generic DELETE request
+   */
+  async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      credentials: 'include',
+      ...options,
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json() as Promise<T>;
   }
 }
 
-const api = new APIClient(API_BASE);
+const api = new APIClient();
+
+
+/**
+ * Get all courses (currently using mock data)
+ * TODO: Replace with actual API call when backend is ready
+ * Future implementation: return api.get<Course[]>('/courses');
+ */
+export function getCourses(): Course[] {
+  return mockCourses;
+}
+
+/**
+ * Get course by ID (currently using mock data)
+ * TODO: Replace with actual API call
+ * Future implementation: return api.get<Course>(`/courses/${id}`);
+ */
+export function getCourseById(id: string): Course | undefined {
+  return mockCourses.find((course: any) => course.id === id);
+}
+
+/**
+ * Search courses (currently using mock data)
+ * TODO: Replace with actual API call
+ * Future implementation: return api.get<Course[]>(`/courses/search?q=${query}`);
+ */
+export function searchCourses(query: string): Course[] {
+  const searchQuery = query.toLowerCase();
+  return mockCourses.filter(
+    (course: any) =>
+      course.title.toLowerCase().includes(searchQuery) ||
+      course.description.toLowerCase().includes(searchQuery) ||
+      course.instructor.name.toLowerCase().includes(searchQuery) ||
+      course.tags.some((tag: any) => tag.toLowerCase().includes(searchQuery))
+  );
+}
+
+/**
+ * Get paginated courses (currently using mock data)
+ * TODO: Replace with actual API call
+ * Future implementation: return api.get<PaginatedResponse<Course>>(`/courses?page=${page}&limit=${limit}`);
+ */
+export function getPaginatedCourses(
+  page: number = 1,
+  limit: number = 20
+): PaginatedResponse<Course> {
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedData = mockCourses.slice(startIndex, endIndex);
+  const totalItems = mockCourses.length;
+  const totalPages = Math.ceil(totalItems / limit);
+
+  return {
+    data: paginatedData,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
+  };
+}
+
 export default api;

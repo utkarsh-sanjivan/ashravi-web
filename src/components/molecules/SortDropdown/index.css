@@ -1,0 +1,100 @@
+.sort-dropdown {
+  position: relative;
+}
+
+.sort-dropdown-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.sort-dropdown-button:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.sort-dropdown-button:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.sort-dropdown-label {
+  color: var(--color-text-secondary);
+  display: none;
+}
+
+.sort-dropdown-value {
+  font-weight: 500;
+}
+
+.sort-dropdown-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform var(--transition-base);
+}
+
+.sort-dropdown-icon--open {
+  transform: rotate(180deg);
+}
+
+.sort-dropdown-menu {
+  position: absolute;
+  right: 0;
+  margin-top: var(--spacing-xs);
+  width: 14rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 50;
+}
+
+.sort-dropdown-list {
+  padding: var(--spacing-xs) 0;
+  margin: 0;
+  list-style: none;
+}
+
+.sort-dropdown-option {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.sort-dropdown-option:hover {
+  background-color: var(--color-surface-hover);
+  padding-left: calc(var(--spacing-md) + var(--spacing-xs));
+}
+
+.sort-dropdown-option--selected {
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 500;
+}
+
+.sort-dropdown-option--selected:hover {
+  background-color: var(--color-primary);
+  opacity: 0.9;
+}
+
+/* Tablet and Desktop */
+@media (min-width: 769px) {
+  .sort-dropdown-label {
+    display: inline;
+  }
+}
