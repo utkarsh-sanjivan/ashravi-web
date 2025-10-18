@@ -1,0 +1,97 @@
+.courses-search-bar {
+  position: relative;
+  width: 100%;
+}
+
+.courses-search-bar-icon-left {
+  position: absolute;
+  inset: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  padding-left: var(--spacing-md);
+  pointer-events: none;
+}
+
+.courses-search-bar-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--color-text-secondary);
+}
+
+.courses-search-bar-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  padding-left: calc(var(--spacing-md) * 3);
+  padding-right: calc(var(--spacing-md) * 3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  transition: all var(--transition-base);
+}
+
+.courses-search-bar-input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.courses-search-bar-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.courses-search-bar-clear {
+  position: absolute;
+  inset: 0;
+  left: auto;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding-right: var(--spacing-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-base);
+}
+
+.courses-search-bar-clear:hover {
+  color: var(--color-text);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .courses-search-bar-input {
+    padding: var(--spacing-sm);
+    padding-left: calc(var(--spacing-sm) * 3);
+    padding-right: calc(var(--spacing-sm) * 3);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.courses-search-bar-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  padding-left: calc(var(--spacing-md) * 3);
+  padding-right: calc(var(--spacing-md) * 3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  transition: all var(--transition-base);
+}
+
+/* Hide native search clear button */
+.courses-search-bar-input::-webkit-search-cancel-button {
+  display: none;
+  appearance: none;
+}
+
+.courses-search-bar-input::-webkit-search-decoration {
+  display: none;
+  appearance: none;
+}
+

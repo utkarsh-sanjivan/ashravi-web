@@ -2,224 +2,233 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import ThemeToggle from '@/components/atoms/ThemeToggle';
+import { useRouter, usePathname } from 'next/navigation';
+
 import Button from '@/components/atoms/Button';
+import ThemeToggle from '@/components/atoms/ThemeToggle';
 import SearchBar from '@/components/molecules/SearchBar';
-import { MenuIcon, CloseIcon } from '@/components/icons';
-import { useAuth } from '@/hooks/useAuth';
+
+import authService from '@/services/authService';
+
 import './index.css';
 
-export interface PublicNavbarProps {
-  isAuthenticated?: boolean;
-  showSearch?: boolean;
-  transparent?: boolean;
+export interface PublicNavbarProps {}
+
+interface User {
+  name: string;
+  email: string;
 }
 
-export default function PublicNavbar({ 
-  isAuthenticated = false, 
-  showSearch = false,
-  transparent = false 
-}: PublicNavbarProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { logout, isLoading: isLoggingOut, getUser } = useAuth();
-  const user = getUser();
+export default function PublicNavbar(props: PublicNavbarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Check if user is logged in
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+      }
+    }
   }, []);
 
   const handleLogout = async () => {
-    await logout();
+    await authService.logout();
+    setUser(null);
+    setIsMenuOpen(false);
+    router.push('/');
   };
 
-  const navbarClass = `public-navbar ${isScrolled ? 'scrolled' : ''} ${transparent && !isScrolled ? 'transparent' : ''}`;
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      router.push(`/courses?q=${encodeURIComponent(query)}`);
+    }
+  };
+
+  const isActivePath = (path: string): boolean => {
+    return pathname === path;
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
 
   return (
-    <nav className={navbarClass}>
-      <div className="navbar-container">
-        <div className="navbar-content">
-          {/* Logo */}
-          <Link href="/" className="navbar-logo">
-            <div className="logo-wrapper">
-              <Image
-                src="/images/logo.jpg"
-                alt="Ashravi Logo"
-                width={150}
-                height={50}
-                className="logo-image"
-                priority
-              />
-            </div>
+    <nav className="public-navbar">
+      <div className="public-navbar-container">
+        {/* Logo */}
+        <Link href="/" className="public-navbar-logo" onClick={closeMenu}>
+          <img
+            src="/images/logo.jpg"
+            alt="Ashravi Web"
+            className="public-navbar-logo-image"
+          />
+          <span className="public-navbar-logo-text">Ashravi Web</span>
+        </Link>
+
+        {/* Desktop Navigation Links */}
+        <div className="public-navbar-nav">
+          <Link
+            href="/courses"
+            className={`public-navbar-link ${isActivePath('/courses') ? 'public-navbar-link--active' : ''}`}
+            onClick={closeMenu}
+          >
+            Courses
           </Link>
-
-          {/* Search Bar (Desktop - Only on Homepage when authenticated) */}
-          {showSearch && (
-            <div className="navbar-search desktop-search">
-              <SearchBar placeholder="Search for parenting courses..." />
-            </div>
-          )}
-
-          {/* Desktop Menu */}
-          <div className="navbar-menu">
-            <Link href="/" className="nav-link">Home</Link>
-            <Link href="/courses" className="nav-link">Courses</Link>
-            {isAuthenticated && (
-              <Link href="/children" className="nav-link">Children</Link>
-            )}
-            <Link href="/about" className="nav-link">About Us</Link>
-            <Link href="/contact" className="nav-link">Contact</Link>
-          </div>
-
-          {/* Right Side Actions */}
-          <div className="navbar-actions">
-            <div className="desktop-actions">
-              <ThemeToggle />
-              {!isAuthenticated ? (
-                <>
-                  <Link href="/auth/login">
-                    <Button variant="outline" size="sm">Login</Button>
-                  </Link>
-                  <Link href="/auth/signup">
-                    <Button variant="primary" size="sm">Get Started Free</Button>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  {user && (
-                    <span className="user-name">Hi, {user.name.split(' ')[0]}</span>
-                  )}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                  >
-                    {isLoggingOut ? 'Logging out...' : 'Logout'}
-                  </Button>
-                </>
-              )}
-            </div>
-
-            {/* Mobile Actions - Theme Toggle + Menu Button */}
-            <div className="mobile-actions">
-              <ThemeToggle />
-              <button
-                className="mobile-menu-button"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Toggle menu"
-              >
-                {isMobileMenuOpen ? (
-                  <CloseIcon className="menu-icon" />
-                ) : (
-                  <MenuIcon className="menu-icon" />
-                )}
-              </button>
-            </div>
-          </div>
+          <Link
+            href="/about"
+            className={`public-navbar-link ${isActivePath('/about') ? 'public-navbar-link--active' : ''}`}
+            onClick={closeMenu}
+          >
+            About
+          </Link>
+          <Link
+            href="/contact"
+            className={`public-navbar-link ${isActivePath('/contact') ? 'public-navbar-link--active' : ''}`}
+            onClick={closeMenu}
+          >
+            Contact
+          </Link>
         </div>
 
-        {/* Search Bar (Mobile - Below navbar) */}
-        {showSearch && (
-          <div className="navbar-search mobile-search">
-            <SearchBar placeholder="Search courses..." />
-          </div>
-        )}
+        {/* Search Bar - Desktop */}
+        <div className="public-navbar-search">
+          <SearchBar placeholder="Search for parenting courses..." />
+        </div>
+
+        {/* Desktop Actions */}
+        <div className="public-navbar-actions">
+          <ThemeToggle />
+
+          {user ? (
+            <>
+              <div className="public-navbar-user">
+                <span className="public-navbar-user-name">
+                  Hello, {user.name.split(' ')[0]}
+                </span>
+              </div>
+              <Button onClick={handleLogout} variant="secondary" size="sm">
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link href="/auth/login">
+                <Button variant="secondary" size="sm">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/auth/signup">
+                <Button variant="primary" size="sm">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
+          )}
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="public-navbar-mobile-toggle"
+            aria-label="Toggle navigation menu"
+            aria-expanded={isMenuOpen}
+          >
+            <svg
+              className="public-navbar-mobile-toggle-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              {isMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <>
-          <div 
-            className="mobile-menu-overlay"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <div className="mobile-menu">
-            <div className="mobile-menu-links">
-              <Link 
-                href="/" 
-                className="mobile-nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link 
-                href="/courses" 
-                className="mobile-nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Courses
-              </Link>
-              {isAuthenticated && (
-                <Link 
-                  href="/children" 
-                  className="mobile-nav-link"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Children
-                </Link>
-              )}
-              <Link 
-                href="/about" 
-                className="mobile-nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                About Us
-              </Link>
-              <Link 
-                href="/contact" 
-                className="mobile-nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Contact
-              </Link>
-            </div>
-            {!isAuthenticated ? (
-              <div className="mobile-menu-actions">
-                <Link 
-                  href="/auth/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Button variant="outline" size="md" className="w-full">
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="public-navbar-mobile-menu">
+          {/* Mobile Search */}
+          <div className="public-navbar-mobile-search">
+            <SearchBar placeholder="Search for parenting courses..." />
+          </div>
+
+          <div className="public-navbar-mobile-links">
+            <Link
+              href="/courses"
+              className={`public-navbar-mobile-link ${isActivePath('/courses') ? 'public-navbar-mobile-link--active' : ''}`}
+              onClick={closeMenu}
+            >
+              Courses
+            </Link>
+            <Link
+              href="/about"
+              className={`public-navbar-mobile-link ${isActivePath('/about') ? 'public-navbar-mobile-link--active' : ''}`}
+              onClick={closeMenu}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className={`public-navbar-mobile-link ${isActivePath('/contact') ? 'public-navbar-mobile-link--active' : ''}`}
+              onClick={closeMenu}
+            >
+              Contact
+            </Link>
+          </div>
+
+          <div className="public-navbar-mobile-actions">
+            {user ? (
+              <>
+                <div className="public-navbar-mobile-user">
+                  <span className="public-navbar-mobile-user-name">
+                    Hello, {user.name}
+                  </span>
+                  <span className="public-navbar-mobile-user-email">
+                    {user.email}
+                  </span>
+                </div>
+                <Button onClick={handleLogout} variant="secondary" className="public-navbar-mobile-button">
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login" className="public-navbar-mobile-button-link" onClick={closeMenu}>
+                  <Button variant="secondary" className="public-navbar-mobile-button">
                     Login
                   </Button>
                 </Link>
-                <Link 
-                  href="/auth/signup"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Button variant="primary" size="md" className="w-full">
-                    Get Started Free
+                <Link href="/auth/signup" className="public-navbar-mobile-button-link" onClick={closeMenu}>
+                  <Button variant="primary" className="public-navbar-mobile-button">
+                    Sign Up
                   </Button>
                 </Link>
-              </div>
-            ) : (
-              <div className="mobile-menu-actions">
-                {user && (
-                  <div className="mobile-user-info">
-                    <span>{user.name}</span>
-                    <span className="user-email">{user.email}</span>
-                  </div>
-                )}
-                <Button 
-                  variant="outline" 
-                  size="md"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  className="w-full"
-                >
-                  {isLoggingOut ? 'Logging out...' : 'Logout'}
-                </Button>
-              </div>
+              </>
             )}
           </div>
-        </>
+        </div>
       )}
     </nav>
   );
