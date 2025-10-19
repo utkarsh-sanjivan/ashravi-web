@@ -99,6 +99,9 @@ export interface Course {
   // Frontend-specific fields
   badges?: CourseBadge[];
   isWishlisted?: boolean;
+  duration?: number; 
+  originalPrice?: number; // ADD THIS
+  reviewCount?: number; // ADD THIS
   
   // Timestamps
   createdAt: string;
@@ -122,6 +125,9 @@ export interface CourseListItem {
   metadata: Pick<CourseMetadata, 'totalDuration'>;
   badges?: CourseBadge[];
   isWishlisted?: boolean;
+  duration?: number; 
+  originalPrice?: number;
+  reviewCount?: number; 
   createdAt: string;
 }
 

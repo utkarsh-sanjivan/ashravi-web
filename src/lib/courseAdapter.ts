@@ -1,4 +1,4 @@
-import type { Course } from '@/types';
+import type { Course, Section } from '@/types';
 
 /**
  * Backend Course Structure (what API returns)
@@ -6,49 +6,49 @@ import type { Course } from '@/types';
 interface BackendCourse {
   _id: string;
   title: string;
-  slug: string;
+  slug?: string;
   headline?: string;
   description: string;
-  shortDescription: string;
+  shortDescription?: string;
   thumbnail: string;
   coverImage?: string;
   category: string;
   subCategory?: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  language: string;
-  price: {
-    amount: number;
-    currency: string;
+  level?: 'beginner' | 'intermediate' | 'advanced';
+  language?: string;
+  price?: {
+    amount?: number;
+    currency?: string;
     discountedPrice?: number;
   };
-  sections: unknown[];
-  instructor: string | {
-    _id: string;
-    name: string;
-    email: string;
+  sections?: unknown[];
+  instructor?: string | {
+    _id?: string;
+    name?: string;
+    email?: string;
     avatar?: string;
     bio?: string;
   };
-  tags: string[];
-  prerequisites: string[];
-  learningOutcomes: string[];
-  targetAudience: string[];
-  isPurchased: boolean;
-  isPublished: boolean;
+  tags?: string[];
+  prerequisites?: string[];
+  learningOutcomes?: string[];
+  targetAudience?: string[];
+  isPurchased?: boolean;
+  isPublished?: boolean;
   publishedAt?: string;
-  enrollmentCount: number;
-  rating: {
-    average: number;
-    count: number;
+  enrollmentCount?: number;
+  rating?: {
+    average?: number;
+    count?: number;
   };
-  metadata: {
-    totalDuration: number;
-    totalVideos: number;
-    totalTests: number;
+  metadata?: {
+    totalDuration?: number;
+    totalVideos?: number;
+    totalTests?: number;
     lastUpdated?: string;
   };
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 /**
@@ -62,21 +62,34 @@ export function transformCourse(backendCourse: BackendCourse): Course {
         credentials: undefined,
         avatar: undefined,
       }
-    : {
+    : backendCourse.instructor
+    ? {
         name: backendCourse.instructor.name || 'Unknown Instructor',
-        credentials: undefined, // Not in backend, can be added later
+        credentials: undefined,
         avatar: backendCourse.instructor.avatar,
         bio: backendCourse.instructor.bio,
+      }
+    : {
+        name: 'Unknown Instructor',
+        credentials: undefined,
+        avatar: undefined,
       };
+
+  // Extract price and rating values
+  const priceAmount = backendCourse.price?.amount ?? 0;
+  const discountedPrice = backendCourse.price?.discountedPrice;
+  const currency = backendCourse.price?.currency ?? 'USD';
+  const ratingAvg = backendCourse.rating?.average ?? 0;
+  const ratingCount = backendCourse.rating?.count ?? 0;
 
   // Determine badges based on course properties
   const badges: Array<'Bestseller' | 'New' | 'Updated' | 'Free'> = [];
   
-  if (backendCourse.price.amount === 0) {
+  if (discountedPrice !== undefined ? discountedPrice === 0 : priceAmount === 0) {
     badges.push('Free');
   }
   
-  if (backendCourse.rating.average >= 4.5 && backendCourse.rating.count >= 1000) {
+  if (ratingAvg >= 4.5 && ratingCount >= 1000) {
     badges.push('Bestseller');
   }
   
@@ -88,42 +101,90 @@ export function transformCourse(backendCourse: BackendCourse): Course {
     badges.push('New');
   }
   
-  if (backendCourse.metadata.lastUpdated) {
+  if (backendCourse.metadata?.lastUpdated) {
     const updatedDate = new Date(backendCourse.metadata.lastUpdated);
     if (updatedDate > thirtyDaysAgo) {
       badges.push('Updated');
     }
   }
 
+  // Calculate original price (only if discounted)
+  const originalPrice = discountedPrice !== undefined ? priceAmount : undefined;
+
+  // Level - lowercase
+  const level: 'beginner' | 'intermediate' | 'advanced' = 
+    backendCourse.level?.toLowerCase() as 'beginner' | 'intermediate' | 'advanced' || 'beginner';
+
+  // Return complete Course object with ALL required fields
   return {
+    _id: backendCourse._id,
     id: backendCourse._id,
-    title: backendCourse.title,
-    description: backendCourse.shortDescription || backendCourse.description,
-    thumbnail: backendCourse.thumbnail,
-    price: backendCourse.price.discountedPrice || backendCourse.price.amount,
-    originalPrice: backendCourse.price.discountedPrice 
-      ? backendCourse.price.amount 
-      : undefined,
-    rating: backendCourse.rating.average,
-    reviewCount: backendCourse.rating.count,
-    duration: Math.ceil(backendCourse.metadata.totalDuration / 60), // Convert minutes to hours
-    level: backendCourse.level.charAt(0).toUpperCase() + backendCourse.level.slice(1) as 'Beginner' | 'Intermediate' | 'Advanced',
-    instructor,
-    badges,
-    tags: backendCourse.tags,
-    category: backendCourse.category,
-    isWishlisted: false, // Will be determined by user's wishlist
-    enrollmentCount: backendCourse.enrollmentCount,
+    title: backendCourse.title || 'Untitled Course',
+    slug: backendCourse.slug || backendCourse._id,
+    headline: backendCourse.headline,
+    description: backendCourse.description || '',
+    shortDescription: backendCourse.shortDescription || backendCourse.description || '',
+    thumbnail: backendCourse.thumbnail || '',
+    coverImage: backendCourse.coverImage,
+    category: backendCourse.category || 'Uncategorized',
+    subCategory: backendCourse.subCategory,
+    level: level,
+    language: backendCourse.language || 'English',
+    price: {
+      amount: discountedPrice ?? priceAmount,
+      currency: currency,
+      discountedPrice: discountedPrice,
+    },
+    sections: backendCourse.sections as Section[] || [],
+    instructor: instructor,
+    tags: backendCourse.tags ?? [],
+    prerequisites: backendCourse.prerequisites ?? [],
+    learningOutcomes: backendCourse.learningOutcomes ?? [],
+    targetAudience: backendCourse.targetAudience ?? [],
+    isPurchased: backendCourse.isPurchased ?? false,
+    isPublished: backendCourse.isPublished ?? true,
+    publishedAt: backendCourse.publishedAt,
+    enrollmentCount: backendCourse.enrollmentCount ?? 0,
+    rating: {
+      average: ratingAvg,
+      count: ratingCount,
+    },
+    metadata: {
+      totalDuration: backendCourse.metadata?.totalDuration ?? 0,
+      totalVideos: backendCourse.metadata?.totalVideos ?? 0,
+      totalTests: backendCourse.metadata?.totalTests ?? 0,
+      lastUpdated: backendCourse.metadata?.lastUpdated,
+    },
+    badges: badges,
+    isWishlisted: false,
+    duration: Math.ceil((backendCourse.metadata?.totalDuration ?? 0) / 60),
+    originalPrice: originalPrice,
+    reviewCount: ratingCount,
     createdAt: backendCourse.createdAt,
-    updatedAt: backendCourse.updatedAt,
+    updatedAt: backendCourse.updatedAt ?? '',
   };
 }
 
+
 /**
  * Transform array of backend courses to frontend format
+ * WITH NULL SAFETY
  */
-export function transformCourses(backendCourses: BackendCourse[]): Course[] {
-  return backendCourses.map(transformCourse);
+export function transformCourses(backendCourses: unknown): Course[] {
+  // Safety check - ensure it's an array
+  if (!backendCourses || !Array.isArray(backendCourses)) {
+    console.warn('transformCourses received invalid data:', backendCourses);
+    return [];
+  }
+
+  return backendCourses
+    .filter((course): course is BackendCourse => {
+      return course != null && 
+             typeof course === 'object' && 
+             '_id' in course &&
+             'title' in course;
+    })
+    .map(transformCourse);
 }
 
 /**
@@ -150,7 +211,6 @@ export function transformFiltersToQuery(filters: {
   }
 
   if (filters.level && filters.level.length > 0) {
-    // Convert frontend levels to lowercase for backend
     queryParams.level = filters.level.map(l => l.toLowerCase()).join(',');
   }
 
@@ -174,7 +234,6 @@ export function transformFiltersToQuery(filters: {
     queryParams.limit = filters.limit.toString();
   }
 
-  // Always fetch only published courses
   queryParams.isPublished = 'true';
 
   return queryParams;
