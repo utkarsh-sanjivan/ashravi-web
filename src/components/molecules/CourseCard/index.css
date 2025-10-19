@@ -320,3 +320,21 @@
     justify-content: space-between;
   }
 }
+
+.course-card-discount {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: #10b981;
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.course-card-pricing {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+

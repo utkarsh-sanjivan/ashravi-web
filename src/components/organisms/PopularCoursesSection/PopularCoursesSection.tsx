@@ -17,7 +17,6 @@ export default function PopularCoursesSection() {
   const { courses, loading, error } = useAppSelector((state) => state.courses);
 
   useEffect(() => {
-    // Fetch courses if not already loaded
     if (courses.length === 0 && !loading) {
       dispatch(fetchCourses({ page: 1, limit: 20 }));
     }
@@ -28,17 +27,13 @@ export default function PopularCoursesSection() {
       return [];
     }
     
-    // Get courses sorted by rating and enrollment count
+    // Sort alphabetically and get first 6
     return [...courses]
-      .sort((a, b) => {
-        const ratingDiff = Number(b.rating) - Number(a.rating);
-        if (ratingDiff !== 0) return ratingDiff;
-        return Number(b.enrollmentCount) - Number(a.enrollmentCount);
-      })
-      .slice(0, 8);
+      .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
+      .slice(0, 6);
   }, [courses]);
 
-  if (loading) {
+  if (loading && courses.length === 0) {
     return (
       <section className="popular-courses-section">
         <div className="popular-courses-container">
@@ -56,7 +51,7 @@ export default function PopularCoursesSection() {
       <section className="popular-courses-section">
         <div className="popular-courses-container">
           <div className="popular-courses-error">
-            <p>Failed to load courses: {error}</p>
+            <p>Failed to load courses</p>
             <Button onClick={() => dispatch(fetchCourses({ page: 1, limit: 20 }))} variant="primary">
               Try Again
             </Button>
@@ -80,7 +75,9 @@ export default function PopularCoursesSection() {
           <>
             <div className="popular-courses-grid">
               {popularCourses.map((course) => (
-                <CourseCard key={course.id} {...course} />
+                course && course.id ? (
+                  <CourseCard key={course.id} {...course} />
+                ) : null
               ))}
             </div>
 

@@ -4,33 +4,58 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import type { Course } from '@/types';
-
 import './index.css';
 
-export interface CourseCardProps extends Course {}
+// Make all properties optional for safety
+export interface CourseCardProps {
+  id: string;
+  title?: string;
+  description?: string;
+  thumbnail?: string;
+  price?: { 
+    amount?: number;
+    currency?: string;
+    discountedPrice?: number;
+  } | number;
+  originalPrice?: number;
+  rating?: {
+    average: number;
+    count: number;
+  } | number;
+  reviewCount?: number;
+  duration?: number;
+  level?: 'beginner' | 'intermediate' | 'advanced';
+  instructor?: string | {
+    name?: string;
+    credentials?: string;
+    avatar?: string;
+    bio?: string;
+  };
+  badges?: Array<'Bestseller' | 'New' | 'Updated' | 'Free'>;
+  tags?: string[];
+  category?: string;
+  isWishlisted?: boolean;
+  enrollmentCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export default function CourseCard(props: CourseCardProps) {
   const router = useRouter();
-  const [isWishlisted, setIsWishlisted] = useState(props.isWishlisted);
+  const [isWishlisted, setIsWishlisted] = useState(props.isWishlisted ?? false);
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Check if user is logged in
     const user = localStorage.getItem('user');
 
     if (!user) {
-      // Redirect to login if not logged in
       router.push('/auth/login');
       return;
     }
 
-    // Toggle wishlist
     setIsWishlisted(!isWishlisted);
-
-    // TODO: Call API to add/remove from wishlist
     console.log(`Course ${props.id} wishlist toggled:`, !isWishlisted);
   };
 
@@ -98,20 +123,60 @@ export default function CourseCard(props: CourseCardProps) {
     return stars;
   };
 
+  // Safe value extraction with type guards
+  const title = props.title ?? 'Untitled Course';
+  const thumbnail = props.thumbnail ?? '/images/course-placeholder.jpg';
+  const category = props.category;
+  const description = props.description;
+
+  // Handle instructor - check if it's an object or string
+  const instructorData = typeof props.instructor === 'object' && props.instructor !== null
+    ? props.instructor
+    : undefined;
+
+  // Handle rating - check if it's an object or number
+  const rating = typeof props.rating === 'object' 
+    ? Number(props.rating.average) || 0
+    : Number(props.rating) || 0;
+
+  const reviewCount = typeof props.rating === 'object'
+    ? Number(props.rating.count) || 0
+    : Number(props.reviewCount) || 0;
+
+  // Handle price - check if it's an object or number
+  const price = typeof props.price === 'object'
+    ? Number(props.price.discountedPrice ?? props.price.amount) || 0
+    : Number(props.price) || 0;
+
+  const originalPrice = typeof props.price === 'object' && props.price.discountedPrice
+    ? Number(props.price.amount)
+    : props.originalPrice
+    ? Number(props.originalPrice)
+    : undefined;
+
+  const duration = Number(props.duration) || 0;
+  const enrollmentCount = Number(props.enrollmentCount) || 0;
+  const badges = props.badges ?? [];
+
+  // Calculate discount percentage
+  const discountPercentage = originalPrice && originalPrice > price
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
+    : 0;
+
   return (
     <Link href={`/courses/${props.id}`} className="course-card">
       {/* Image Container with Badges and Wishlist */}
       <div className="course-card-image-container">
         <img
-          src={props.thumbnail || '/images/course-placeholder.jpg'}
-          alt={props.title}
+          src={thumbnail}
+          alt={title}
           className="course-card-image"
         />
 
         {/* Badges - Top Left */}
-        {props.badges && props.badges.length > 0 && (
+        {badges.length > 0 && (
           <div className="course-card-badges">
-            {props.badges.slice(0, 2).map((badge) => (
+            {badges.slice(0, 2).map((badge) => (
               <span
                 key={badge}
                 className={`course-card-badge course-card-badge--${badge.toLowerCase()}`}
@@ -147,33 +212,35 @@ export default function CourseCard(props: CourseCardProps) {
       {/* Content */}
       <div className="course-card-content">
         {/* Title */}
-        <h3 className="course-card-title">{props.title}</h3>
+        <h3 className="course-card-title">{title}</h3>
 
         {/* Category */}
-        {props.category && (
-          <p className="course-card-category">{props.category}</p>
+        {category && (
+          <p className="course-card-category">{category}</p>
         )}
 
         {/* Description */}
-        <p className="course-card-description">{props.description}</p>
+        {description && (
+          <p className="course-card-description">{description}</p>
+        )}
 
         {/* Instructor */}
-        {props.instructor && (
+        {instructorData && (
           <div className="course-card-instructor">
-            {props.instructor.avatar && (
+            {instructorData.avatar && (
               <img
-                src={props.instructor.avatar}
-                alt={props.instructor.name || 'Instructor'}
+                src={instructorData.avatar}
+                alt={instructorData.name ?? 'Instructor'}
                 className="course-card-instructor-avatar"
               />
             )}
             <div className="course-card-instructor-info">
               <span className="course-card-instructor-name">
-                {props.instructor.name || 'Unknown Instructor'}
+                {instructorData.name ?? 'Unknown Instructor'}
               </span>
-              {props.instructor.credentials && (
+              {instructorData.credentials && (
                 <span className="course-card-instructor-credentials">
-                  {props.instructor.credentials}
+                  {instructorData.credentials}
                 </span>
               )}
             </div>
@@ -182,14 +249,12 @@ export default function CourseCard(props: CourseCardProps) {
 
         {/* Rating */}
         <div className="course-card-rating">
-          <div className="course-card-stars">
-            {renderStars(Number(props.rating) || 0)}
-          </div>
+          <div className="course-card-stars">{renderStars(rating)}</div>
           <span className="course-card-rating-value">
-            {(Number(props.rating) || 0).toFixed(1)}
+            {rating.toFixed(1)}
           </span>
           <span className="course-card-rating-count">
-            ({(Number(props.reviewCount) || 0).toLocaleString()})
+            ({reviewCount.toLocaleString()})
           </span>
         </div>
 
@@ -197,13 +262,16 @@ export default function CourseCard(props: CourseCardProps) {
         <div className="course-card-footer">
           {/* Price */}
           <div className="course-card-pricing">
-            <span className="course-card-price">
-              {formatPrice(Number(props.price) || 0)}
-            </span>
-            {props.originalPrice && Number(props.originalPrice) > Number(props.price || 0) && (
-              <span className="course-card-original-price">
-                ${Number(props.originalPrice).toFixed(2)}
-              </span>
+            <span className="course-card-price">{formatPrice(price)}</span>
+            {originalPrice && originalPrice > price && (
+              <>
+                <span className="course-card-original-price">
+                  ${originalPrice.toFixed(2)}
+                </span>
+                <span className="course-card-discount">
+                  {discountPercentage}% off
+                </span>
+              </>
             )}
           </div>
 
@@ -213,17 +281,16 @@ export default function CourseCard(props: CourseCardProps) {
               <svg className="course-card-meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {Number(props.duration) || 0}h
+              {duration}h
             </span>
             <span className="course-card-meta-item">
               <svg className="course-card-meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              {(Number(props.enrollmentCount) || 0).toLocaleString()}
+              {enrollmentCount.toLocaleString()}
             </span>
           </div>
         </div>
-
       </div>
     </Link>
   );

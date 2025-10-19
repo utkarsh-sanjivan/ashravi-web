@@ -1,27 +1,50 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 import CourseCard from '@/components/molecules/CourseCard';
 import Button from '@/components/atoms/Button';
 
-import { getCourses } from '@/lib/api';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { fetchCourses } from '@/store/courses.slice';
 
 import './index.css';
 
 export default function FeaturedCoursesSection() {
+  const dispatch = useAppDispatch();
+  const { courses, loading } = useAppSelector((state) => state.courses);
+
+  useEffect(() => {
+    if (courses.length === 0 && !loading) {
+      dispatch(fetchCourses({ page: 1, limit: 20 }));
+    }
+  }, [dispatch, courses.length, loading]);
+
   const featuredCourses = useMemo(() => {
-    const allCourses = getCourses();
-    // Add null check and ensure it's an array
-    if (!allCourses || !Array.isArray(allCourses)) {
+    if (!courses || !Array.isArray(courses)) {
       return [];
     }
-    // Get first 6 courses or courses with "Bestseller" badge
-    return allCourses
-      .filter((course) => course.badges?.includes('Bestseller'))
+    
+    // Get first 6 courses alphabetically
+    return [...courses]
+      .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
       .slice(0, 6);
-  }, []);
+  }, [courses]);
+
+  if (loading && courses.length === 0) {
+    return (
+      <section className="featured-courses-section">
+        <div className="featured-courses-container">
+          <div className="popular-courses-loading">
+            <div className="popular-courses-spinner"></div>
+            <p>Loading featured courses...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="featured-courses-section">
@@ -33,12 +56,13 @@ export default function FeaturedCoursesSection() {
           </p>
         </div>
 
-        {/* Add conditional rendering */}
         {featuredCourses && featuredCourses.length > 0 ? (
           <>
             <div className="featured-courses-grid">
               {featuredCourses.map((course) => (
-                <CourseCard key={course.id} {...course} />
+                course && course.id ? (
+                  <CourseCard key={course.id} {...course} />
+                ) : null
               ))}
             </div>
 
