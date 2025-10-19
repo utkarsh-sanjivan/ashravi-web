@@ -171,22 +171,40 @@ export async function fetchCoursesFromAPI(filters: {
     // Check various possible response structures
     if (response?.data?.courses && Array.isArray(response.data.courses)) {
       coursesArray = response.data.courses;
-      paginationData = {
-        currentPage: response.data.pagination?.currentPage ?? filters.page ?? 1,
-        totalPages: response.data.pagination?.totalPages ?? 1,
-        totalItems: response.data.pagination?.totalItems ?? coursesArray.length,
-      };
+      
+      // Map API pagination fields to frontend format
+      if (response.data.pagination) {
+        paginationData = {
+          currentPage: response.data.pagination.page ?? filters.page ?? 1,
+          totalPages: response.data.pagination.pages ?? 1,
+          totalItems: response.data.pagination.total ?? coursesArray.length,
+        };
+      }
     } else if (response?.courses && Array.isArray(response.courses)) {
       coursesArray = response.courses;
-      paginationData = {
-        currentPage: response.pagination?.currentPage ?? filters.page ?? 1,
-        totalPages: response.pagination?.totalPages ?? 1,
-        totalItems: response.pagination?.totalItems ?? coursesArray.length,
-      };
-    } else if (Array.isArray(response?.data)) {
+      
+      // Map API pagination fields to frontend format
+      if (response.pagination) {
+        paginationData = {
+          currentPage: response.pagination.page ?? filters.page ?? 1,
+          totalPages: response.pagination.pages ?? 1,
+          totalItems: response.pagination.total ?? coursesArray.length,
+        };
+      }
+    } else if (response?.data && Array.isArray(response.data)) {
       coursesArray = response.data;
-      paginationData.totalItems = coursesArray.length;
-      paginationData.totalPages = Math.ceil(coursesArray.length / (filters.limit ?? 20));
+      
+      // Check if pagination is at response level
+      if (response.pagination) {
+        paginationData = {
+          currentPage: response.pagination.page ?? filters.page ?? 1,
+          totalPages: response.pagination.pages ?? 1,
+          totalItems: response.pagination.total ?? coursesArray.length,
+        };
+      } else {
+        paginationData.totalItems = coursesArray.length;
+        paginationData.totalPages = Math.ceil(coursesArray.length / (filters.limit ?? 20));
+      }
     } else if (Array.isArray(response)) {
       coursesArray = response;
       paginationData.totalItems = coursesArray.length;
@@ -194,8 +212,9 @@ export async function fetchCoursesFromAPI(filters: {
     }
 
     console.log('Courses array to transform:', coursesArray);
+    console.log('Pagination data:', paginationData);
 
-    // Transform backend courses to frontend format
+    // Transform API courses to frontend format
     const transformedCourses = transformCourses(coursesArray);
 
     console.log('Transformed courses:', transformedCourses);
@@ -222,6 +241,7 @@ export async function fetchCoursesFromAPI(filters: {
     };
   }
 }
+
 
 /**
  * Get courses (temporary - uses mock data)

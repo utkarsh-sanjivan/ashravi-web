@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import PublicNavbar from '@/components/organisms/PublicNavbar';
 import Footer from '@/components/organisms/Footer';
@@ -11,6 +11,7 @@ import CoursesSearchBar from '@/components/molecules/CoursesSearchBar';
 import SortDropdown from '@/components/molecules/SortDropdown';
 import Pagination from '@/components/molecules/Pagination';
 import Button from '@/components/atoms/Button';
+import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -24,6 +25,7 @@ const ITEMS_PER_PAGE = 20;
 
 export default function CourseListingPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   
   const { courses, loading, error, currentPage, totalPages, totalItems } = useAppSelector(
@@ -47,7 +49,6 @@ export default function CourseListingPage() {
       dispatch(searchCourses(initialQuery));
       setSearchQuery(initialQuery);
     } else {
-      // Load courses in alphabetical order when coming from navbar
       dispatch(
         fetchCourses({
           page: 1,
@@ -60,7 +61,6 @@ export default function CourseListingPage() {
   const handleFilterChange = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
     
-    // Dispatch fetch with filters
     const level = newFilters.level.length > 0 ? newFilters.level.join(',') : undefined;
     
     dispatch(
@@ -77,7 +77,10 @@ export default function CourseListingPage() {
     (query: string) => {
       setSearchQuery(query);
       
+      // Update URL with search query
+      const params = new URLSearchParams();
       if (query.trim()) {
+        params.set('q', query);
         dispatch(searchCourses(query));
       } else {
         dispatch(
@@ -87,14 +90,18 @@ export default function CourseListingPage() {
           })
         );
       }
+      
+      // Update URL
+      const newUrl = query.trim() 
+        ? `/courses?${params.toString()}` 
+        : '/courses';
+      router.push(newUrl, { scroll: false });
     },
-    [dispatch]
+    [dispatch, router]
   );
 
   const handleSortChange = useCallback((newSort: SortOption) => {
     setSortBy(newSort);
-    // Client-side sorting for now
-    // TODO: Implement server-side sorting if API supports it
   }, []);
 
   const handlePageChange = useCallback(
@@ -122,13 +129,16 @@ export default function CourseListingPage() {
     });
     setSearchQuery('');
     
+    // Clear URL params
+    router.push('/courses', { scroll: false });
+    
     dispatch(
       fetchCourses({
         page: 1,
         limit: ITEMS_PER_PAGE,
       })
     );
-  }, [dispatch]);
+  }, [dispatch, router]);
 
   // Client-side sorting of courses
   const sortedCourses = [...courses].sort((a, b) => {
@@ -138,11 +148,17 @@ export default function CourseListingPage() {
       case 'alphabetical-desc':
         return b.title.localeCompare(a.title);
       case 'rating':
-        return b.rating - a.rating;
+        const ratingA = typeof a.rating === 'object' ? a.rating.average : a.rating;
+        const ratingB = typeof b.rating === 'object' ? b.rating.average : b.rating;
+        return ratingB - ratingA;
       case 'price-low':
-        return a.price - b.price;
+        const priceA = typeof a.price === 'object' ? a.price.amount : a.price;
+        const priceB = typeof b.price === 'object' ? b.price.amount : b.price;
+        return priceA - priceB;
       case 'price-high':
-        return b.price - a.price;
+        const priceHighA = typeof a.price === 'object' ? a.price.amount : a.price;
+        const priceHighB = typeof b.price === 'object' ? b.price.amount : b.price;
+        return priceHighB - priceHighA;
       case 'newest':
       default:
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -188,7 +204,7 @@ export default function CourseListingPage() {
           {/* Loading State */}
           {loading && (
             <div className="course-listing-loading">
-              <div className="course-listing-spinner"></div>
+              <SpinnerIcon size={48} />
               <p>Loading courses...</p>
             </div>
           )}

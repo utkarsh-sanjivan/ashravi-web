@@ -1,9 +1,9 @@
 import type { Course, Section } from '@/types';
 
 /**
- * Backend Course Structure (what API returns)
+ * API Course Structure (what API returns)
  */
-interface BackendCourse {
+interface APICourse {
   _id: string;
   title: string;
   slug?: string;
@@ -54,7 +54,7 @@ interface BackendCourse {
 /**
  * Transform backend course data to frontend Course type
  */
-export function transformCourse(backendCourse: BackendCourse): Course {
+export function transformCourse(backendCourse: APICourse): Course {
   // Handle instructor - could be ObjectId string or populated object
   const instructor = typeof backendCourse.instructor === 'string'
     ? {
@@ -157,7 +157,7 @@ export function transformCourse(backendCourse: BackendCourse): Course {
     },
     badges: badges,
     isWishlisted: false,
-    duration: Math.ceil((backendCourse.metadata?.totalDuration ?? 0) / 60),
+    duration: Math.ceil((backendCourse.metadata?.totalDuration ?? 0) / 3600),
     originalPrice: originalPrice,
     reviewCount: ratingCount,
     createdAt: backendCourse.createdAt,
@@ -178,7 +178,7 @@ export function transformCourses(backendCourses: unknown): Course[] {
   }
 
   return backendCourses
-    .filter((course): course is BackendCourse => {
+    .filter((course): course is APICourse => {
       return course != null && 
              typeof course === 'object' && 
              '_id' in course &&

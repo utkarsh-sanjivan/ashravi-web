@@ -3,8 +3,10 @@
 import { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
+import Carousel from '@/components/molecules/Carousel';
 import CourseCard from '@/components/molecules/CourseCard';
 import Button from '@/components/atoms/Button';
+import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -18,7 +20,7 @@ export default function FeaturedCoursesSection() {
 
   useEffect(() => {
     if (courses.length === 0 && !loading) {
-      dispatch(fetchCourses({ page: 1, limit: 20 }));
+      dispatch(fetchCourses({ page: 1, limit: 6 }));
     }
   }, [dispatch, courses.length, loading]);
 
@@ -27,7 +29,6 @@ export default function FeaturedCoursesSection() {
       return [];
     }
     
-    // Get first 6 courses alphabetically
     return [...courses]
       .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
       .slice(0, 6);
@@ -37,8 +38,8 @@ export default function FeaturedCoursesSection() {
     return (
       <section className="featured-courses-section">
         <div className="featured-courses-container">
-          <div className="popular-courses-loading">
-            <div className="popular-courses-spinner"></div>
+          <div className="featured-courses-loading">
+            <SpinnerIcon size={48} />
             <p>Loading featured courses...</p>
           </div>
         </div>
@@ -58,13 +59,13 @@ export default function FeaturedCoursesSection() {
 
         {featuredCourses && featuredCourses.length > 0 ? (
           <>
-            <div className="featured-courses-grid">
-              {featuredCourses.map((course) => (
+            <Carousel>
+              {featuredCourses.map((course) =>
                 course && course.id ? (
                   <CourseCard key={course.id} {...course} />
                 ) : null
-              ))}
-            </div>
+              )}
+            </Carousel>
 
             <div className="featured-courses-footer">
               <Link href="/courses">

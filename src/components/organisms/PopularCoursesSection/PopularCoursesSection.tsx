@@ -3,8 +3,10 @@
 import { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
+import Carousel from '@/components/molecules/Carousel';
 import CourseCard from '@/components/molecules/CourseCard';
 import Button from '@/components/atoms/Button';
+import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -18,7 +20,7 @@ export default function PopularCoursesSection() {
 
   useEffect(() => {
     if (courses.length === 0 && !loading) {
-      dispatch(fetchCourses({ page: 1, limit: 20 }));
+      dispatch(fetchCourses({ page: 1, limit: 6 }));
     }
   }, [dispatch, courses.length, loading]);
 
@@ -27,7 +29,6 @@ export default function PopularCoursesSection() {
       return [];
     }
     
-    // Sort alphabetically and get first 6
     return [...courses]
       .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
       .slice(0, 6);
@@ -38,7 +39,7 @@ export default function PopularCoursesSection() {
       <section className="popular-courses-section">
         <div className="popular-courses-container">
           <div className="popular-courses-loading">
-            <div className="popular-courses-spinner"></div>
+            <SpinnerIcon size={48} />
             <p>Loading popular courses...</p>
           </div>
         </div>
@@ -52,7 +53,7 @@ export default function PopularCoursesSection() {
         <div className="popular-courses-container">
           <div className="popular-courses-error">
             <p>Failed to load courses</p>
-            <Button onClick={() => dispatch(fetchCourses({ page: 1, limit: 20 }))} variant="primary">
+            <Button onClick={() => dispatch(fetchCourses({ page: 1, limit: 6 }))} variant="primary">
               Try Again
             </Button>
           </div>
@@ -73,13 +74,13 @@ export default function PopularCoursesSection() {
 
         {popularCourses && popularCourses.length > 0 ? (
           <>
-            <div className="popular-courses-grid">
-              {popularCourses.map((course) => (
+            <Carousel>
+              {popularCourses.map((course) =>
                 course && course.id ? (
                   <CourseCard key={course.id} {...course} />
                 ) : null
-              ))}
-            </div>
+              )}
+            </Carousel>
 
             <div className="popular-courses-footer">
               <Link href="/courses">

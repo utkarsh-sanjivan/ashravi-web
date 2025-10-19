@@ -58,6 +58,7 @@ a {
     --color-text: #eeeeee;
     --color-border: #333333;
     --color-surface: #1a1a1a;
+    --color-surface-hover: rgb(26 26 26, 0.8);
   }
 }
 
