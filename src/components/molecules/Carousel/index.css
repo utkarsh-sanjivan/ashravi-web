@@ -6,7 +6,7 @@
 
 @media (max-width: 768px) {
   .carousel-container {
-    padding: 0; /* Remove padding on mobile since arrows are hidden */
+    padding: 0 40px; /* Reduce padding on mobile but keep space for arrows */
   }
 }
 
@@ -88,10 +88,17 @@
   transform: rotate(-90deg);
 }
 
-/* Hide arrows on mobile */
+/* Adjust arrow size on mobile - KEEP VISIBLE */
 @media (max-width: 768px) {
   .carousel-arrow {
-    display: none;
+    width: 36px;
+    height: 36px;
+    /* Remove display: none; to keep arrows visible */
+  }
+  
+  .arrow-icon {
+    width: 18px;
+    height: 18px;
   }
 }
 
