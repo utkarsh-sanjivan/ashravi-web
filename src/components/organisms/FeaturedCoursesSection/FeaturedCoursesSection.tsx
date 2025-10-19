@@ -1,107 +1,61 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchFeaturedCourses } from '@/store/courses.slice';
+import { useMemo } from 'react';
+import Link from 'next/link';
+
 import CourseCard from '@/components/molecules/CourseCard';
-import Carousel from '@/components/molecules/Carousel';
-import Spinner from '@/components/atoms/Spinner';
+import Button from '@/components/atoms/Button';
+
+import { getCourses } from '@/lib/api';
+
 import './index.css';
 
-export interface FeaturedCoursesSectionProps {
-  title: string;
-  subtitle: string;
-  limit?: number;
-  isAuthenticated?: boolean;
-  ctaText?: string;
-  ctaHref?: string;
-  useCarousel?: boolean;
-}
-
-export default function FeaturedCoursesSection({
-  title,
-  subtitle,
-  limit = 6,
-  isAuthenticated = false,
-  ctaText,
-  ctaHref,
-  useCarousel = true,
-}: FeaturedCoursesSectionProps) {
-  const dispatch = useAppDispatch();
-  const { featuredCourses, loading, error } = useAppSelector((state) => state.courses);
-
-  useEffect(() => {
-    dispatch(fetchFeaturedCourses(limit));
-  }, [dispatch, limit]);
-
-  if (loading) {
-    return (
-      <section className="featured-courses-section">
-        <div className="featured-courses-container">
-          <div className="loading-state">
-            <Spinner size="lg" />
-            <p>Loading courses...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="featured-courses-section">
-        <div className="featured-courses-container">
-          <div className="error-state">
-            <p>Failed to load courses. Please try again later.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  const courseCards = featuredCourses.map((course) => (
-    <CourseCard 
-      key={course.id} 
-      {...course} 
-      isAuthenticated={isAuthenticated} 
-    />
-  ));
+export default function FeaturedCoursesSection() {
+  const featuredCourses = useMemo(() => {
+    const allCourses = getCourses();
+    // Add null check and ensure it's an array
+    if (!allCourses || !Array.isArray(allCourses)) {
+      return [];
+    }
+    // Get first 6 courses or courses with "Bestseller" badge
+    return allCourses
+      .filter((course) => course.badges?.includes('Bestseller'))
+      .slice(0, 6);
+  }, []);
 
   return (
     <section className="featured-courses-section">
       <div className="featured-courses-container">
-        <div className="section-header">
-          <h2 className="section-title">{title}</h2>
-          <p className="section-subtitle">{subtitle}</p>
+        <div className="featured-courses-header">
+          <h2 className="featured-courses-title">Featured Courses</h2>
+          <p className="featured-courses-subtitle">
+            Discover our most popular courses chosen by parents like you
+          </p>
         </div>
 
-        {useCarousel ? (
-          <Carousel
-            slidesToShow={{
-              mobile: 1,
-              tablet: 2,
-              desktop: 3,
-            }}
-            autoPlay={false}
-            showDots={true}
-            showArrows={true}
-            gap={24} // Changed from 32 to 24
-          >
-            {courseCards}
-          </Carousel>
-        ) : (
-          <div className="courses-grid">
-            {courseCards}
-          </div>
-        )}
+        {/* Add conditional rendering */}
+        {featuredCourses && featuredCourses.length > 0 ? (
+          <>
+            <div className="featured-courses-grid">
+              {featuredCourses.map((course) => (
+                <CourseCard key={course.id} {...course} />
+              ))}
+            </div>
 
-        {ctaText && ctaHref && (
-          <div className="section-cta">
-            <a href={ctaHref} className="inline-block">
-              <button className="btn btn-outline btn-lg">
-                {ctaText}
-              </button>
-            </a>
+            <div className="featured-courses-footer">
+              <Link href="/courses">
+                <Button variant="primary" size="lg">
+                  View All Courses
+                </Button>
+              </Link>
+            </div>
+          </>
+        ) : (
+          <div className="featured-courses-empty">
+            <p>No featured courses available at the moment.</p>
+            <Link href="/courses">
+              <Button variant="primary">Browse All Courses</Button>
+            </Link>
           </div>
         )}
       </div>

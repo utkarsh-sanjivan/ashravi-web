@@ -82,3 +82,20 @@
   text-align: center;
   margin-top: 3rem;
 }
+
+.featured-courses-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  gap: var(--spacing-lg);
+  text-align: center;
+}
+
+.featured-courses-empty p {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+

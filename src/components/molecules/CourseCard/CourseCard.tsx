@@ -158,32 +158,38 @@ export default function CourseCard(props: CourseCardProps) {
         <p className="course-card-description">{props.description}</p>
 
         {/* Instructor */}
-        <div className="course-card-instructor">
-          {props.instructor.avatar && (
-            <img
-              src={props.instructor.avatar}
-              alt={props.instructor.name}
-              className="course-card-instructor-avatar"
-            />
-          )}
-          <div className="course-card-instructor-info">
-            <span className="course-card-instructor-name">
-              {props.instructor.name}
-            </span>
-            {props.instructor.credentials && (
-              <span className="course-card-instructor-credentials">
-                {props.instructor.credentials}
-              </span>
+        {props.instructor && (
+          <div className="course-card-instructor">
+            {props.instructor.avatar && (
+              <img
+                src={props.instructor.avatar}
+                alt={props.instructor.name || 'Instructor'}
+                className="course-card-instructor-avatar"
+              />
             )}
+            <div className="course-card-instructor-info">
+              <span className="course-card-instructor-name">
+                {props.instructor.name || 'Unknown Instructor'}
+              </span>
+              {props.instructor.credentials && (
+                <span className="course-card-instructor-credentials">
+                  {props.instructor.credentials}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Rating */}
         <div className="course-card-rating">
-          <div className="course-card-stars">{renderStars(props.rating)}</div>
-          <span className="course-card-rating-value">{props.rating.toFixed(1)}</span>
+          <div className="course-card-stars">
+            {renderStars(Number(props.rating) || 0)}
+          </div>
+          <span className="course-card-rating-value">
+            {(Number(props.rating) || 0).toFixed(1)}
+          </span>
           <span className="course-card-rating-count">
-            ({props.reviewCount.toLocaleString()})
+            ({(Number(props.reviewCount) || 0).toLocaleString()})
           </span>
         </div>
 
@@ -191,10 +197,12 @@ export default function CourseCard(props: CourseCardProps) {
         <div className="course-card-footer">
           {/* Price */}
           <div className="course-card-pricing">
-            <span className="course-card-price">{formatPrice(props.price)}</span>
-            {props.originalPrice && props.originalPrice > props.price && (
+            <span className="course-card-price">
+              {formatPrice(Number(props.price) || 0)}
+            </span>
+            {props.originalPrice && Number(props.originalPrice) > Number(props.price || 0) && (
               <span className="course-card-original-price">
-                ${props.originalPrice.toFixed(2)}
+                ${Number(props.originalPrice).toFixed(2)}
               </span>
             )}
           </div>
@@ -205,16 +213,17 @@ export default function CourseCard(props: CourseCardProps) {
               <svg className="course-card-meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {props.duration}h
+              {Number(props.duration) || 0}h
             </span>
             <span className="course-card-meta-item">
               <svg className="course-card-meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              {props.enrollmentCount.toLocaleString()}
+              {(Number(props.enrollmentCount) || 0).toLocaleString()}
             </span>
           </div>
         </div>
+
       </div>
     </Link>
   );
