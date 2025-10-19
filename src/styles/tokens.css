@@ -10,6 +10,9 @@
   --color-error: #ee0000;
   --color-success: #00ee00;
   --color-warning: #ff8800;
+  --color-surface-hover: #f3f4f6;
+  --color-hover-light: rgba(0, 0, 0, 0.05);
+  --color-hover-dark: rgba(255, 255, 255, 0.1);
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -50,4 +53,7 @@
   --color-error: #ff4444;
   --color-success: #44ff44;
   --color-warning: #ffaa44;
+  --color-surface-hover: #374151;
+  --color-hover-light: rgba(255, 255, 255, 0.1);
+  --color-hover-dark: rgba(255, 255, 255, 0.15);
 }
