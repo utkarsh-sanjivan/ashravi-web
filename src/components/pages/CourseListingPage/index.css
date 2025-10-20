@@ -161,3 +161,52 @@
     font-size: var(--font-size-sm);
   }
 }
+
+/* Loading State */
+.course-listing-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  gap: var(--spacing-md);
+}
+
+.course-listing-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.course-listing-loading p {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* Error State */
+.course-listing-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  gap: var(--spacing-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-lg);
+}
+
+.course-listing-error-text {
+  font-size: var(--font-size-base);
+  color: var(--color-error);
+  text-align: center;
+}

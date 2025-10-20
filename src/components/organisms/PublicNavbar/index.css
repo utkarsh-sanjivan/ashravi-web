@@ -41,13 +41,6 @@
   object-fit: cover;
 }
 
-.public-navbar-logo-text {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: var(--color-text);
-  white-space: nowrap;
-}
-
 /* Desktop Navigation */
 .public-navbar-nav {
   display: none;
@@ -268,10 +261,6 @@
     height: 3rem;
   }
 
-  .public-navbar-logo-text {
-    font-size: var(--font-size-xl);
-  }
-
   .public-navbar-search {
     max-width: 40rem;
   }
@@ -289,10 +278,6 @@
     height: 2rem;
   }
 
-  .public-navbar-logo-text {
-    font-size: var(--font-size-base);
-  }
-
   .public-navbar-search {
     max-width: 24rem;
   }
@@ -308,11 +293,7 @@
   .public-navbar-logo-image {
     width: 2rem;
     height: 2rem;
-  }
-
-  .public-navbar-logo-text {
-    font-size: var(--font-size-base);
-  }
+  }s
 
   .public-navbar-actions {
     gap: var(--spacing-sm);

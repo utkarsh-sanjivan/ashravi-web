@@ -70,7 +70,6 @@ export default function PublicNavbar(props: PublicNavbarProps) {
             alt="Ashravi Web"
             className="public-navbar-logo-image"
           />
-          <span className="public-navbar-logo-text">Ashravi Web</span>
         </Link>
 
         {/* Desktop Navigation Links */}

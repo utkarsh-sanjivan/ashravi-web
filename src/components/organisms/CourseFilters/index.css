@@ -181,3 +181,25 @@
     display: grid;
   }
 }
+
+/* Filter dropdown option hover states */
+.filter-dropdown-option {
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  transition: background-color var(--transition-base);
+}
+
+.filter-dropdown-option:hover {
+  background-color: var(--color-surface-hover);
+}
+
+/* For inverted theme (dark mode) */
+:root[data-theme='dark'] .filter-dropdown-option:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Lighter background for dark mode */
+}
+
+/* For standard theme (light mode) */
+:root:not([data-theme='dark']) .filter-dropdown-option:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* Darker background for light mode */
+}
+

@@ -17,3 +17,6 @@ export { default as FacebookIcon } from './FacebookIcon';
 export { default as AppleIcon } from './AppleIcon';
 export { default as CheckCircleIcon } from './CheckCircleIcon';
 export { default as XCircleIcon } from './XCircleIcon';
+export { default as SpinnerIcon } from './SpinnerIcon';
+export { default as HeartIcon } from './HeartIcon';
+export { default as ClockIcon } from './ClockIcon';

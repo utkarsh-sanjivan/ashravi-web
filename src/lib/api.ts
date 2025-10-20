@@ -5,10 +5,8 @@
  * Uses mock data until backend APIs are integrated.
  */
 
-import type { 
-  Course, 
-  PaginatedResponse 
-} from '@/types';
+import { transformCourses, transformFiltersToQuery } from './courseAdapter';
+import type { Course } from '@/types';
 
 import { mockCourses } from '@/mock-data/courses';
 
@@ -132,67 +130,185 @@ class APIClient {
 
 const api = new APIClient();
 
+/**
+ * Get courses with filters (uses adapter to transform backend data)
+ */
+export async function fetchCoursesFromAPI(filters: {
+  search?: string;
+  category?: string;
+  level?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  rating?: number;
+  page?: number;
+  limit?: number;
+}): Promise<{
+  data: Course[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}> {
+  try {
+    const queryParams = transformFiltersToQuery(filters);
+    const queryString = new URLSearchParams(queryParams).toString();
+    
+    console.log('Fetching courses with params:', queryString);
+    
+    const response = await api.get<any>(`/courses?${queryString}`);
+    
+    console.log('API Response:', response);
+
+    // Handle different possible response structures
+    let coursesArray: unknown[] = [];
+    let paginationData = {
+      currentPage: filters.page ?? 1,
+      totalPages: 1,
+      totalItems: 0,
+    };
+
+    // Check various possible response structures
+    if (response?.data?.courses && Array.isArray(response.data.courses)) {
+      coursesArray = response.data.courses;
+      
+      // Map API pagination fields to frontend format
+      if (response.data.pagination) {
+        paginationData = {
+          currentPage: response.data.pagination.page ?? filters.page ?? 1,
+          totalPages: response.data.pagination.pages ?? 1,
+          totalItems: response.data.pagination.total ?? coursesArray.length,
+        };
+      }
+    } else if (response?.courses && Array.isArray(response.courses)) {
+      coursesArray = response.courses;
+      
+      // Map API pagination fields to frontend format
+      if (response.pagination) {
+        paginationData = {
+          currentPage: response.pagination.page ?? filters.page ?? 1,
+          totalPages: response.pagination.pages ?? 1,
+          totalItems: response.pagination.total ?? coursesArray.length,
+        };
+      }
+    } else if (response?.data && Array.isArray(response.data)) {
+      coursesArray = response.data;
+      
+      // Check if pagination is at response level
+      if (response.pagination) {
+        paginationData = {
+          currentPage: response.pagination.page ?? filters.page ?? 1,
+          totalPages: response.pagination.pages ?? 1,
+          totalItems: response.pagination.total ?? coursesArray.length,
+        };
+      } else {
+        paginationData.totalItems = coursesArray.length;
+        paginationData.totalPages = Math.ceil(coursesArray.length / (filters.limit ?? 20));
+      }
+    } else if (Array.isArray(response)) {
+      coursesArray = response;
+      paginationData.totalItems = coursesArray.length;
+      paginationData.totalPages = Math.ceil(coursesArray.length / (filters.limit ?? 20));
+    }
+
+    console.log('Courses array to transform:', coursesArray);
+    console.log('Pagination data:', paginationData);
+
+    // Transform API courses to frontend format
+    const transformedCourses = transformCourses(coursesArray);
+
+    console.log('Transformed courses:', transformedCourses);
+
+    return {
+      data: transformedCourses,
+      pagination: paginationData,
+    };
+  } catch (error) {
+    console.error('Error fetching courses from API:', error);
+    // Fallback to mock data
+    const limit = filters.limit ?? 20;
+    const page = filters.page ?? 1;
+    const startIndex = (page - 1) * limit;
+    const paginatedMockData = mockCourses.slice(startIndex, startIndex + limit);
+    
+    return {
+      data: paginatedMockData,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(mockCourses.length / limit),
+        totalItems: mockCourses.length,
+      },
+    };
+  }
+}
+
 
 /**
- * Get all courses (currently using mock data)
- * TODO: Replace with actual API call when backend is ready
- * Future implementation: return api.get<Course[]>('/courses');
+ * Get courses (temporary - uses mock data)
  */
 export function getCourses(): Course[] {
-  return mockCourses;
+  try {
+    return mockCourses || [];
+  } catch (error) {
+    console.error('Error getting courses:', error);
+    return [];
+  }
 }
 
 /**
- * Get course by ID (currently using mock data)
- * TODO: Replace with actual API call
- * Future implementation: return api.get<Course>(`/courses/${id}`);
+ * Get course by ID
  */
-export function getCourseById(id: string): Course | undefined {
-  return mockCourses.find((course: any) => course.id === id);
+export async function getCourseById(id: string): Promise<Course | null> {
+  try {
+    console.log('Fetching course by ID:', id);
+    
+    const response = await api.get<any>(`/courses/${id}`);
+    
+    console.log('Course API Response:', response);
+
+    // Handle different possible response structures
+    let courseData: unknown = null;
+
+    if (response?.data?.course) {
+      courseData = response.data.course;
+    } else if (response?.course) {
+      courseData = response.course;
+    } else if (response?.data) {
+      courseData = response.data;
+    } else {
+      courseData = response;
+    }
+
+    // Transform single course
+    if (courseData) {
+      const transformedCourses = transformCourses([courseData]);
+      return transformedCourses[0] || null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching course by ID:', error);
+    // Fallback to mock data
+    return mockCourses.find((c) => c.id === id) || null;
+  }
 }
 
 /**
- * Search courses (currently using mock data)
- * TODO: Replace with actual API call
- * Future implementation: return api.get<Course[]>(`/courses/search?q=${query}`);
+ * Search courses
  */
-export function searchCourses(query: string): Course[] {
-  const searchQuery = query.toLowerCase();
-  return mockCourses.filter(
-    (course: any) =>
-      course.title.toLowerCase().includes(searchQuery) ||
-      course.description.toLowerCase().includes(searchQuery) ||
-      course.instructor.name.toLowerCase().includes(searchQuery) ||
-      course.tags.some((tag: any) => tag.toLowerCase().includes(searchQuery))
-  );
-}
-
-/**
- * Get paginated courses (currently using mock data)
- * TODO: Replace with actual API call
- * Future implementation: return api.get<PaginatedResponse<Course>>(`/courses?page=${page}&limit=${limit}`);
- */
-export function getPaginatedCourses(
-  page: number = 1,
-  limit: number = 20
-): PaginatedResponse<Course> {
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedData = mockCourses.slice(startIndex, endIndex);
-  const totalItems = mockCourses.length;
-  const totalPages = Math.ceil(totalItems / limit);
-
-  return {
-    data: paginatedData,
-    pagination: {
-      currentPage: page,
-      totalPages,
-      totalItems,
-      itemsPerPage: limit,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    },
+export async function searchCourses(query: string): Promise<{
+  data: Course[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
   };
+}> {
+  return fetchCoursesFromAPI({
+    search: query,
+    page: 1,
+    limit: 20,
+  });
 }
 
 export default api;

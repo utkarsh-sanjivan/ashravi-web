@@ -1,154 +1,124 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '@/lib/api';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
-// Import mock data as fallback
-import coursesData from '@/mock-data/courses.json';
-import { Course } from '@/types';
+import { fetchCoursesFromAPI } from '@/lib/api';
 
+import type { Course } from '@/types';
 
-
-interface CoursesState {
+interface CourseState {
   courses: Course[];
-  featuredCourses: Course[];
-  popularCourses: Course[];
   loading: boolean;
   error: string | null;
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
   filters: {
-    category: string | null;
-    priceRange: [number, number] | null;
+    category?: string;
+    level?: string[];
+    search?: string;
   };
 }
 
-const initialState: CoursesState = {
+const initialState: CourseState = {
   courses: [],
-  featuredCourses: [],
-  popularCourses: [],
   loading: false,
   error: null,
-  filters: {
-    category: null,
-    priceRange: null,
-  },
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+  filters: {},
 };
 
-// Async thunk to fetch all courses
+// Async Thunks
 export const fetchCourses = createAsyncThunk(
   'courses/fetchCourses',
-  async (_, { rejectWithValue }) => {
-    try {
-      // TODO: Replace with actual API call
-      // const response = await api.get<Course[]>('/courses');
-      // return response;
-      
-      // Mock API call - simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return coursesData as Course[];
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch courses');
-    }
+  async (params: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    level?: string;
+    search?: string;
+  }) => {
+    // Convert comma-separated level string to array
+    const levelArray = params.level ? params.level.split(',') : undefined;
+    
+    return await fetchCoursesFromAPI({
+      page: params.page,
+      limit: params.limit,
+      category: params.category,
+      level: levelArray,
+      search: params.search,
+    });
   }
 );
 
-// Async thunk to fetch featured courses
-export const fetchFeaturedCourses = createAsyncThunk(
-  'courses/fetchFeaturedCourses',
-  async (limit: number = 6, { rejectWithValue }) => {
-    try {
-      // TODO: Replace with actual API call
-      // const response = await api.get<Course[]>(`/courses/featured?limit=${limit}`);
-      // return response;
-      
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return coursesData.slice(0, limit) as Course[];
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch featured courses');
-    }
+export const searchCourses = createAsyncThunk(
+  'courses/searchCourses',
+  async (searchQuery: string) => {
+    return await fetchCoursesFromAPI({
+      search: searchQuery,
+      page: 1,
+      limit: 20,
+    });
   }
 );
 
-// Async thunk to fetch popular courses (sorted by student count)
-export const fetchPopularCourses = createAsyncThunk(
-  'courses/fetchPopularCourses',
-  async (limit: number = 6, { rejectWithValue }) => {
-    try {
-      // TODO: Replace with actual API call
-      // const response = await api.get<Course[]>(`/courses/popular?limit=${limit}`);
-      // return response;
-      
-      // Mock API call - sort by student count
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const sortedCourses = [...coursesData]
-        .sort((a, b) => (b.enrollmentCount || 0) - (a.enrollmentCount || 0))
-        .slice(0, limit);
-      return sortedCourses as Course[];
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch popular courses');
-    }
-  }
-);
-
-const coursesSlice = createSlice({
+const courseSlice = createSlice({
   name: 'courses',
   initialState,
   reducers: {
-    setFilters: (state, action) => {
+    setFilters: (
+      state,
+      action: PayloadAction<{
+        category?: string;
+        level?: string[];
+        search?: string;
+      }>
+    ) => {
       state.filters = action.payload;
     },
     clearFilters: (state) => {
-      state.filters = {
-        category: null,
-        priceRange: null,
-      };
+      state.filters = {};
+    },
+    setCurrentPage: (state, action: PayloadAction<number>) => {
+      state.currentPage = action.payload;
     },
   },
   extraReducers: (builder) => {
-    // Fetch all courses
-    builder
-      .addCase(fetchCourses.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchCourses.fulfilled, (state, action) => {
-        state.loading = false;
-        state.courses = action.payload;
-      })
-      .addCase(fetchCourses.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
+    // Fetch Courses
+    builder.addCase(fetchCourses.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchCourses.fulfilled, (state, action) => {
+      state.loading = false;
+      state.courses = action.payload.data;
+      state.currentPage = action.payload.pagination.currentPage;
+      state.totalPages = action.payload.pagination.totalPages;
+      state.totalItems = action.payload.pagination.totalItems;
+    });
+    builder.addCase(fetchCourses.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to fetch courses';
+    });
 
-    // Fetch featured courses
-    builder
-      .addCase(fetchFeaturedCourses.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchFeaturedCourses.fulfilled, (state, action) => {
-        state.loading = false;
-        state.featuredCourses = action.payload;
-      })
-      .addCase(fetchFeaturedCourses.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // Fetch popular courses
-    builder
-      .addCase(fetchPopularCourses.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchPopularCourses.fulfilled, (state, action) => {
-        state.loading = false;
-        state.popularCourses = action.payload;
-      })
-      .addCase(fetchPopularCourses.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
+    // Search Courses
+    builder.addCase(searchCourses.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(searchCourses.fulfilled, (state, action) => {
+      state.loading = false;
+      state.courses = action.payload.data;
+      state.currentPage = action.payload.pagination.currentPage;
+      state.totalPages = action.payload.pagination.totalPages;
+      state.totalItems = action.payload.pagination.totalItems;
+    });
+    builder.addCase(searchCourses.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to search courses';
+    });
   },
 });
 
-export const { setFilters, clearFilters } = coursesSlice.actions;
-export default coursesSlice.reducer;
+export const { setFilters, clearFilters, setCurrentPage } = courseSlice.actions;
+export default courseSlice.reducer;

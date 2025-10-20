@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import PublicNavbar from '@/components/organisms/PublicNavbar';
 import Footer from '@/components/organisms/Footer';
@@ -11,10 +11,13 @@ import CoursesSearchBar from '@/components/molecules/CoursesSearchBar';
 import SortDropdown from '@/components/molecules/SortDropdown';
 import Pagination from '@/components/molecules/Pagination';
 import Button from '@/components/atoms/Button';
+import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
-import { getCourses } from '@/lib/api';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { fetchCourses, searchCourses, setCurrentPage } from '@/store/courses.slice';
 
-import type { Course, FilterState, SortOption } from '@/types';
+import type { FilterState, SortOption } from '@/types';
 
 import './index.css';
 
@@ -22,10 +25,15 @@ const ITEMS_PER_PAGE = 20;
 
 export default function CourseListingPage() {
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get('q') || '';
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  
+  const { courses, loading, error, currentPage, totalPages, totalItems } = useAppSelector(
+    (state) => state.courses
+  );
 
+  const initialQuery = searchParams.get('q') || '';
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filters, setFilters] = useState<FilterState>({
     priceRange: [0, 200],
@@ -35,115 +43,81 @@ export default function CourseListingPage() {
     rating: null,
   });
 
-  const allCourses = useMemo(() => getCourses(), []);
-
-  // Filter courses
-  const filteredCourses = useMemo(() => {
-    let filtered = [...allCourses];
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (course) =>
-          course.title.toLowerCase().includes(query) ||
-          course.description.toLowerCase().includes(query) ||
-          course.instructor.name.toLowerCase().includes(query) ||
-          course.tags.some((tag) => tag.toLowerCase().includes(query))
-      );
-    }
-
-    // Price filter
-    if (filters.isFree) {
-      filtered = filtered.filter((course) => course.price === 0);
+  // Initial load or when search query changes from navbar
+  useEffect(() => {
+    if (initialQuery) {
+      dispatch(searchCourses(initialQuery));
+      setSearchQuery(initialQuery);
     } else {
-      filtered = filtered.filter(
-        (course) =>
-          course.price >= filters.priceRange[0] &&
-          course.price <= filters.priceRange[1]
+      dispatch(
+        fetchCourses({
+          page: 1,
+          limit: ITEMS_PER_PAGE,
+        })
       );
     }
-
-    // Duration filter
-    if (filters.duration.length > 0) {
-      filtered = filtered.filter((course) => {
-        if (filters.duration.includes('under-2') && course.duration < 2) return true;
-        if (
-          filters.duration.includes('2-5') &&
-          course.duration >= 2 &&
-          course.duration <= 5
-        )
-          return true;
-        if (filters.duration.includes('5-plus') && course.duration > 5) return true;
-        return false;
-      });
-    }
-
-    // Level filter
-    if (filters.level.length > 0) {
-      filtered = filtered.filter((course) =>
-        filters.level.includes(course.level.toLowerCase())
-      );
-    }
-
-    // Rating filter
-    if (filters.rating) {
-      filtered = filtered.filter((course) => course.rating >= filters.rating!);
-    }
-
-    return filtered;
-  }, [allCourses, searchQuery, filters]);
-
-  // Sort courses
-  const sortedCourses = useMemo(() => {
-    const sorted = [...filteredCourses];
-
-    switch (sortBy) {
-      case 'alphabetical-asc':
-        return sorted.sort((a, b) => a.title.localeCompare(b.title));
-      case 'alphabetical-desc':
-        return sorted.sort((a, b) => b.title.localeCompare(a.title));
-      case 'rating':
-        return sorted.sort((a, b) => b.rating - a.rating);
-      case 'price-low':
-        return sorted.sort((a, b) => a.price - b.price);
-      case 'price-high':
-        return sorted.sort((a, b) => b.price - a.price);
-      case 'newest':
-      default:
-        return sorted.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-    }
-  }, [filteredCourses, sortBy]);
-
-  // Pagination
-  const totalPages = Math.ceil(sortedCourses.length / ITEMS_PER_PAGE);
-  const paginatedCourses = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return sortedCourses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [sortedCourses, currentPage]);
+  }, [initialQuery, dispatch]);
 
   const handleFilterChange = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
-    setCurrentPage(1);
-  }, []);
+    
+    const level = newFilters.level.length > 0 ? newFilters.level.join(',') : undefined;
+    
+    dispatch(
+      fetchCourses({
+        page: 1,
+        limit: ITEMS_PER_PAGE,
+        level,
+        search: searchQuery || undefined,
+      })
+    );
+  }, [dispatch, searchQuery]);
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
-  }, []);
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      
+      // Update URL with search query
+      const params = new URLSearchParams();
+      if (query.trim()) {
+        params.set('q', query);
+        dispatch(searchCourses(query));
+      } else {
+        dispatch(
+          fetchCourses({
+            page: 1,
+            limit: ITEMS_PER_PAGE,
+          })
+        );
+      }
+      
+      // Update URL
+      const newUrl = query.trim() 
+        ? `/courses?${params.toString()}` 
+        : '/courses';
+      router.push(newUrl, { scroll: false });
+    },
+    [dispatch, router]
+  );
 
   const handleSortChange = useCallback((newSort: SortOption) => {
     setSortBy(newSort);
-    setCurrentPage(1);
   }, []);
 
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      dispatch(setCurrentPage(page));
+      dispatch(
+        fetchCourses({
+          page,
+          limit: ITEMS_PER_PAGE,
+          search: searchQuery || undefined,
+        })
+      );
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    [dispatch, searchQuery]
+  );
 
   const handleResetFilters = useCallback(() => {
     setFilters({
@@ -154,14 +128,42 @@ export default function CourseListingPage() {
       rating: null,
     });
     setSearchQuery('');
-    setCurrentPage(1);
-  }, []);
+    
+    // Clear URL params
+    router.push('/courses', { scroll: false });
+    
+    dispatch(
+      fetchCourses({
+        page: 1,
+        limit: ITEMS_PER_PAGE,
+      })
+    );
+  }, [dispatch, router]);
 
-  useEffect(() => {
-    if (initialQuery) {
-      setSearchQuery(initialQuery);
+  // Client-side sorting of courses
+  const sortedCourses = [...courses].sort((a, b) => {
+    switch (sortBy) {
+      case 'alphabetical-asc':
+        return a.title.localeCompare(b.title);
+      case 'alphabetical-desc':
+        return b.title.localeCompare(a.title);
+      case 'rating':
+        const ratingA = typeof a.rating === 'object' ? a.rating.average : a.rating;
+        const ratingB = typeof b.rating === 'object' ? b.rating.average : b.rating;
+        return ratingB - ratingA;
+      case 'price-low':
+        const priceA = typeof a.price === 'object' ? a.price.amount : a.price;
+        const priceB = typeof b.price === 'object' ? b.price.amount : b.price;
+        return priceA - priceB;
+      case 'price-high':
+        const priceHighA = typeof a.price === 'object' ? a.price.amount : a.price;
+        const priceHighB = typeof b.price === 'object' ? b.price.amount : b.price;
+        return priceHighB - priceHighA;
+      case 'newest':
+      default:
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
-  }, [initialQuery]);
+  });
 
   return (
     <div className="course-listing-page">
@@ -194,16 +196,33 @@ export default function CourseListingPage() {
           {/* Results Header */}
           <div className="course-listing-results-header">
             <p className="course-listing-results-count">
-              {filteredCourses.length}{' '}
-              {filteredCourses.length === 1 ? 'course' : 'courses'} found
+              {totalItems} {totalItems === 1 ? 'course' : 'courses'} found
             </p>
             <SortDropdown value={sortBy} onChange={handleSortChange} />
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="course-listing-loading">
+              <SpinnerIcon size={48} />
+              <p>Loading courses...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="course-listing-error">
+              <p className="course-listing-error-text">{error}</p>
+              <Button onClick={handleResetFilters} variant="primary">
+                Try Again
+              </Button>
+            </div>
+          )}
+
           {/* Course Grid */}
-          {paginatedCourses.length > 0 ? (
+          {!loading && !error && sortedCourses.length > 0 && (
             <>
-              <CourseGrid courses={paginatedCourses} />
+              <CourseGrid courses={sortedCourses} />
 
               {/* Pagination */}
               {totalPages > 1 && (
@@ -216,7 +235,10 @@ export default function CourseListingPage() {
                 </div>
               )}
             </>
-          ) : (
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && sortedCourses.length === 0 && (
             <div className="course-listing-empty">
               <div className="course-listing-empty-content">
                 <h3 className="course-listing-empty-title">No courses found</h3>

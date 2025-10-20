@@ -1,23 +1,25 @@
 import { configureStore } from '@reduxjs/toolkit';
+
+import courseReducer from './courses.slice';
 import userReducer from './user.slice';
 import coursesReducer from './courses.slice';
 import wishlistReducer from './wishlist.slice';
 import childrenReducer from './children.slice';
 import assessmentReducer from './assessment.slice';
 
-export const makeStore = () => {
-  return configureStore({
-    reducer: {
-      user: userReducer,
-      courses: coursesReducer,
-      wishlist: wishlistReducer,
-      children: childrenReducer,
-      assessment: assessmentReducer,
-    },
-    devTools: process.env.NODE_ENV !== 'production',
-  });
-};
+export const store = configureStore({
+  reducer: {
+    courses: courseReducer,
+    user: userReducer,
+    wishlist: wishlistReducer,
+    children: childrenReducer,
+    assessment: assessmentReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
+});
 
-export type AppStore = ReturnType<typeof makeStore>;
-export type RootState = ReturnType<AppStore['getState']>;
-export type AppDispatch = AppStore['dispatch'];
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

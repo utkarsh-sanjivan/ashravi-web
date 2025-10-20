@@ -1,79 +1,104 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchPopularCourses } from '@/store/courses.slice';
-import CourseCard from '@/components/molecules/CourseCard';
+import { useEffect, useMemo } from 'react';
+import Link from 'next/link';
+
 import Carousel from '@/components/molecules/Carousel';
-import Spinner from '@/components/atoms/Spinner';
+import CourseCard from '@/components/molecules/CourseCard';
+import Button from '@/components/atoms/Button';
+import SpinnerIcon from '@/components/icons/SpinnerIcon';
+
+import { useAppDispatch } from '@/hooks/useAppDispatch';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { fetchCourses } from '@/store/courses.slice';
+
 import './index.css';
 
-export interface PopularCoursesSectionProps {
-  title: string;
-  subtitle: string;
-  limit?: number;
-  isAuthenticated?: boolean;
-  ctaText?: string;
-  ctaHref?: string;
-}
-
-export default function PopularCoursesSection({
-  title,
-  subtitle,
-  limit = 6,
-  isAuthenticated = false,
-  ctaText,
-  ctaHref,
-}: PopularCoursesSectionProps) {
+export default function PopularCoursesSection() {
   const dispatch = useAppDispatch();
-  const { popularCourses, loading, error } = useAppSelector((state) => state.courses);
+  const { courses, loading, error } = useAppSelector((state) => state.courses);
 
   useEffect(() => {
-    dispatch(fetchPopularCourses(limit));
-  }, [dispatch, limit]);
+    if (courses.length === 0 && !loading) {
+      dispatch(fetchCourses({ page: 1, limit: 6 }));
+    }
+  }, [dispatch, courses.length, loading]);
 
-  // ... loading and error states ...
+  const popularCourses = useMemo(() => {
+    if (!courses || !Array.isArray(courses)) {
+      return [];
+    }
+    
+    return [...courses]
+      .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
+      .slice(0, 6);
+  }, [courses]);
+
+  if (loading && courses.length === 0) {
+    return (
+      <section className="popular-courses-section">
+        <div className="popular-courses-container">
+          <div className="popular-courses-loading">
+            <SpinnerIcon size={48} />
+            <p>Loading popular courses...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="popular-courses-section">
+        <div className="popular-courses-container">
+          <div className="popular-courses-error">
+            <p>Failed to load courses</p>
+            <Button onClick={() => dispatch(fetchCourses({ page: 1, limit: 6 }))} variant="primary">
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="popular-courses-section">
       <div className="popular-courses-container">
-        <div className="section-header">
-          <h2 className="section-title">{title}</h2>
-          <p className="section-subtitle">{subtitle}</p>
+        <div className="popular-courses-header">
+          <h2 className="popular-courses-title">Popular Courses</h2>
+          <p className="popular-courses-subtitle">
+            Most loved courses by our community
+          </p>
         </div>
 
-        <Carousel
-          slidesToShow={{
-            mobile: 1,
-            tablet: 2,
-            desktop: 3,
-          }}
-          autoPlay={true}
-          autoPlayInterval={5000}
-          showDots={true}
-          showArrows={true}
-          gap={24} // Changed from 32 to 24
-        >
-          {popularCourses.map((course) => (
-            <CourseCard 
-              key={course.id} 
-              {...course} 
-              isAuthenticated={isAuthenticated} 
-            />
-          ))}
-        </Carousel>
+        {popularCourses && popularCourses.length > 0 ? (
+          <>
+            <Carousel>
+              {popularCourses.map((course) =>
+                course && course.id ? (
+                  <CourseCard key={course.id} {...course} />
+                ) : null
+              )}
+            </Carousel>
 
-        {ctaText && ctaHref && (
-          <div className="section-cta">
-            <a href={ctaHref} className="inline-block">
-              <button className="btn btn-outline btn-lg">
-                {ctaText}
-              </button>
-            </a>
+            <div className="popular-courses-footer">
+              <Link href="/courses">
+                <Button variant="primary" size="lg">
+                  View All Courses
+                </Button>
+              </Link>
+            </div>
+          </>
+        ) : (
+          <div className="popular-courses-empty">
+            <p>No popular courses available at the moment.</p>
+            <Link href="/courses">
+              <Button variant="primary">Browse All Courses</Button>
+            </Link>
           </div>
         )}
       </div>
     </section>
   );
 }
-

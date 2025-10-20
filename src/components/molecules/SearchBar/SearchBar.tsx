@@ -79,7 +79,7 @@ export default function SearchBar({
     if (!searchQuery.trim()) return;
 
     const encodedQuery = encodeURIComponent(searchQuery.trim());
-    router.push(`/courses?q=${encodedQuery}&page=1&limit=10`);
+    router.push(`/courses?q=${encodedQuery}&page=1&limit=20`);
     setShowSuggestions(false);
     
     if (onSearch) {
