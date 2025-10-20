@@ -1,25 +1,28 @@
 import { configureStore } from '@reduxjs/toolkit';
-
-import courseReducer from './courses.slice';
-import userReducer from './user.slice';
-import coursesReducer from './courses.slice';
-import wishlistReducer from './wishlist.slice';
-import childrenReducer from './children.slice';
-import assessmentReducer from './assessment.slice';
+import authReducer from './slices/auth.slice';
+import coursesReducer from './slices/courses.slice';
+import wishlistReducer from './slices/wishlist.slice';
+import childrenReducer from './slices/children.slice';
+import assessmentReducer from './slices/assessment.slice';
 
 export const store = configureStore({
   reducer: {
-    courses: courseReducer,
-    user: userReducer,
+    auth: authReducer,          // ✅ RENAMED from 'user' to 'auth'
+    courses: coursesReducer,
     wishlist: wishlistReducer,
     children: childrenReducer,
     assessment: assessmentReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
+      serializableCheck: {
+        // Ignore these action types
+        ignoredActions: ['auth/login/fulfilled', 'auth/register/fulfilled'],
+      },
     }),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+export default store;

@@ -41,14 +41,7 @@ export default function LandingPage() {
 
       <HowItWorksSection steps={landingSteps} />
 
-      <FeaturedCoursesSection
-        title="Featured Parenting Courses"
-        subtitle="Preview courses designed specifically for parents like you"
-        limit={6}
-        isAuthenticated={false}
-        ctaText="View All Courses"
-        ctaHref="/courses"
-      />
+      <FeaturedCoursesSection />
 
       <TestimonialsSection testimonials={landingTestimonials} />
 

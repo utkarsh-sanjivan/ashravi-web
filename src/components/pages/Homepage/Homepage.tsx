@@ -15,7 +15,7 @@ import { homepageSteps, homepageTestimonials, trustIndicators } from '@/config/h
 export default function Homepage() {
   return (
     <>
-      <PublicNavbar isAuthenticated={true} showSearch={true} transparent={true} />
+      <PublicNavbar />
 
       <HeroSection
         headline="Transform Your Parenting with Evidence-Based Strategies"
@@ -36,23 +36,10 @@ export default function Homepage() {
       <TrustIndicatorsSection indicators={trustIndicators} />
 
       {/* Recommended Courses with Carousel */}
-      <FeaturedCoursesSection
-        title="Recommended For You"
-        subtitle="Personalized parenting courses based on your family's needs"
-        limit={6}
-        isAuthenticated={true}
-        useCarousel={true}
-      />
+      <FeaturedCoursesSection />
 
       {/* Popular Courses with Auto-play Carousel */}
-      <PopularCoursesSection
-        title="Most Popular Courses"
-        subtitle="Join thousands of parents learning with our top-rated courses"
-        limit={6}
-        isAuthenticated={true}
-        ctaText="Explore All Courses"
-        ctaHref="/courses"
-      />
+      <PopularCoursesSection />
 
       <HowItWorksSection steps={homepageSteps} />
 

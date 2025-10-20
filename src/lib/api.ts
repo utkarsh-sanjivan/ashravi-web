@@ -5,7 +5,7 @@
  * Uses mock data until backend APIs are integrated.
  */
 
-import { transformCourses, transformFiltersToQuery } from './courseAdapter';
+import { transformCourses, transformFiltersToQuery } from '../adapters/courseAdapter';
 import type { Course } from '@/types';
 
 import { mockCourses } from '@/mock-data/courses';
