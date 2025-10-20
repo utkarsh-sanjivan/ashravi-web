@@ -10,7 +10,7 @@ import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
-import { fetchCourses } from '@/store/courses.slice';
+import { fetchCourses } from '@/store/slices/courses.slice';
 
 import './index.css';
 
@@ -74,7 +74,7 @@ export default function PopularCoursesSection() {
 
         {popularCourses && popularCourses.length > 0 ? (
           <>
-            <Carousel>
+            <Carousel key={`popular-${popularCourses.length}`}>
               {popularCourses.map((course) =>
                 course && course.id ? (
                   <CourseCard key={course.id} {...course} />

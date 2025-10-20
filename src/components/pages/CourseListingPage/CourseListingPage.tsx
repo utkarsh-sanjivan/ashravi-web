@@ -13,9 +13,8 @@ import Pagination from '@/components/molecules/Pagination';
 import Button from '@/components/atoms/Button';
 import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
-import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { useAppSelector } from '@/hooks/useAppSelector';
-import { fetchCourses, searchCourses, setCurrentPage } from '@/store/courses.slice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchCourses, searchCourses, setCurrentPage } from '@/store/slices/courses.slice';
 
 import type { FilterState, SortOption } from '@/types';
 

@@ -12,7 +12,11 @@ import authService from '@/services/authService';
 
 import './index.css';
 
-export interface PublicNavbarProps {}
+export interface PublicNavbarProps {
+  isAuthenticated?: boolean;
+  showSearch?: boolean;
+  transparent?: boolean;
+}
 
 interface User {
   name: string;

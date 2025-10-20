@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-
-import { fetchCoursesFromAPI } from '@/lib/api';
-
+import courseService from '@/services/courseService';
 import type { Course } from '@/types';
 
 interface CourseState {
   courses: Course[];
+  featuredCourses: Course[];
+  popularCourses: Course[];
   loading: boolean;
   error: string | null;
   currentPage: number;
@@ -20,6 +20,8 @@ interface CourseState {
 
 const initialState: CourseState = {
   courses: [],
+  featuredCourses: [],
+  popularCourses: [],
   loading: false,
   error: null,
   currentPage: 1,
@@ -37,16 +39,25 @@ export const fetchCourses = createAsyncThunk(
     category?: string;
     level?: string;
     search?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    levels?: string[];
+    minRating?: number;
+    sortBy?: string;
   }) => {
-    // Convert comma-separated level string to array
-    const levelArray = params.level ? params.level.split(',') : undefined;
-    
-    return await fetchCoursesFromAPI({
+    // Convert comma-separated level string to array if needed
+    const levelArray = params.level ? params.level.split(',') : params.levels;
+
+    return await courseService.getCourses({
       page: params.page,
       limit: params.limit,
       category: params.category,
       level: levelArray,
       search: params.search,
+      minPrice: params.minPrice,
+      maxPrice: params.maxPrice,
+      minRating: params.minRating,
+      sortBy: params.sortBy,
     });
   }
 );
@@ -54,11 +65,21 @@ export const fetchCourses = createAsyncThunk(
 export const searchCourses = createAsyncThunk(
   'courses/searchCourses',
   async (searchQuery: string) => {
-    return await fetchCoursesFromAPI({
-      search: searchQuery,
-      page: 1,
-      limit: 20,
-    });
+    return await courseService.searchCourses(searchQuery);
+  }
+);
+
+export const fetchFeaturedCourses = createAsyncThunk(
+  'courses/fetchFeaturedCourses',
+  async (limit: number = 10) => {
+    return await courseService.getFeaturedCourses(limit);
+  }
+);
+
+export const fetchPopularCourses = createAsyncThunk(
+  'courses/fetchPopularCourses',
+  async (limit: number = 10) => {
+    return await courseService.getPopularCourses(limit);
   }
 );
 
@@ -116,6 +137,34 @@ const courseSlice = createSlice({
     builder.addCase(searchCourses.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || 'Failed to search courses';
+    });
+
+    // Fetch Featured Courses
+    builder.addCase(fetchFeaturedCourses.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchFeaturedCourses.fulfilled, (state, action) => {
+      state.loading = false;
+      state.featuredCourses = action.payload;
+    });
+    builder.addCase(fetchFeaturedCourses.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to fetch featured courses';
+    });
+
+    // Fetch Popular Courses
+    builder.addCase(fetchPopularCourses.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchPopularCourses.fulfilled, (state, action) => {
+      state.loading = false;
+      state.popularCourses = action.payload;
+    });
+    builder.addCase(fetchPopularCourses.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to fetch popular courses';
     });
   },
 });
