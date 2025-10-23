@@ -1,25 +1,31 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 
-import courseReducer from './courses.slice';
-import userReducer from './user.slice';
-import coursesReducer from './courses.slice';
-import wishlistReducer from './wishlist.slice';
-import childrenReducer from './children.slice';
 import assessmentReducer from './assessment.slice';
+import childrenReducer from './children.slice';
+import coursesReducer from './courses.slice';
+import userReducer from './user.slice';
+import wishlistReducer from './wishlist.slice';
 
-export const store = configureStore({
-  reducer: {
-    courses: courseReducer,
-    user: userReducer,
-    wishlist: wishlistReducer,
-    children: childrenReducer,
-    assessment: assessmentReducer,
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: false,
-    }),
+const rootReducer = combineReducers({
+  assessment: assessmentReducer,
+  children: childrenReducer,
+  courses: coursesReducer,
+  user: userReducer,
+  wishlist: wishlistReducer,
 });
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof rootReducer>;
+
+export type AppPreloadedState = Partial<RootState>;
+
+export const makeStore = (preloadedState?: AppPreloadedState) =>
+  configureStore({
+    reducer: rootReducer,
+    preloadedState,
+    devTools: process.env.NODE_ENV !== 'production',
+  });
+
+export type AppStore = ReturnType<typeof makeStore>;
+export type AppDispatch = AppStore['dispatch'];
+
+export const store = makeStore();
