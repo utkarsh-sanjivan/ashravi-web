@@ -4,6 +4,7 @@ import HeroSection from '@/components/organisms/HeroSection';
 import WhyChooseSection from '@/components/organisms/WhyChooseSection';
 import HowItWorksSection from '@/components/organisms/HowItWorksSection';
 import FeaturedCoursesSection from '@/components/organisms/FeaturedCoursesSection';
+import PopularCoursesSection from '@/components/organisms/PopularCoursesSection';
 import TestimonialsSection from '@/components/organisms/TestimonialsSection';
 import NewsletterSection from '@/components/organisms/NewsletterSection';
 import Footer from '@/components/organisms/Footer';
@@ -41,12 +42,22 @@ export default function LandingPage() {
 
       <HowItWorksSection steps={landingSteps} />
 
+      {/* Recommended Courses with Carousel */}
       <FeaturedCoursesSection
-        title="Featured Parenting Courses"
-        subtitle="Preview courses designed specifically for parents like you"
+        title="Recommended For You"
+        subtitle="Personalized parenting courses based on your family's needs"
         limit={6}
-        isAuthenticated={false}
-        ctaText="View All Courses"
+        isAuthenticated={true}
+        useCarousel={true}
+      />
+
+      {/* Popular Courses with Auto-play Carousel */}
+      <PopularCoursesSection
+        title="Most Popular Courses"
+        subtitle="Join thousands of parents learning with our top-rated courses"
+        limit={6}
+        isAuthenticated={true}
+        ctaText="Explore All Courses"
         ctaHref="/courses"
       />
 
