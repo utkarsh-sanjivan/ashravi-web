@@ -73,13 +73,14 @@ const parseSearchParams = (
 };
 
 interface CoursesPageProps {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const baseState = await getMiddlewarePreloadedState();
   const store = initializeServerStore(baseState);
-  const { filters, queryArgs, searchText, page } = parseSearchParams(searchParams);
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const { filters, queryArgs, searchText, page } = parseSearchParams(resolvedSearchParams);
 
   store.dispatch(
     setCourseFilters({

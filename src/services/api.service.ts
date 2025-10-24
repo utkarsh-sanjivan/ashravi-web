@@ -3,7 +3,6 @@ import type { BaseQueryFn, FetchArgs } from '@reduxjs/toolkit/query';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 import { env } from '@/config/env';
-import { clearUser } from '@/store/user.slice';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -143,6 +142,22 @@ export const isApiError = (value: unknown): value is ApiError =>
   'message' in value &&
   'status' in value;
 
+type ClearUserActionCreator = typeof import('@/store/user.slice')['clearUser'];
+let cachedClearUser: ClearUserActionCreator | null = null;
+
+const getClearUserAction = async (): Promise<ClearUserActionCreator> => {
+  if (!cachedClearUser) {
+    const module = await import('@/store/user.slice');
+    cachedClearUser = module.clearUser;
+  }
+
+  if (!cachedClearUser) {
+    throw new Error('Unable to resolve clearUser action creator');
+  }
+
+  return cachedClearUser;
+};
+
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: '',
   credentials: 'include',
@@ -181,7 +196,8 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError> = 
     if (!refreshResult.error) {
       result = await rawBaseQuery(normalizedArgs, api, extraOptions);
     } else {
-      api.dispatch(clearUser());
+      const clearUserAction = await getClearUserAction();
+      api.dispatch(clearUserAction());
       return { error: normalizeApiError(refreshResult.error) };
     }
   }

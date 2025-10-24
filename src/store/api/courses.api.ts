@@ -59,13 +59,21 @@ const normalizeDetailResponse = (payload: any): CourseDetailResponse => ({
   ),
 });
 
+const resolveInternalApiUrl = (path: string) => {
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return `${window.location.origin}${path}`;
+  }
+
+  return `${env.NEXT_PUBLIC_SITE_URL}${path}`;
+};
+
 export const coursesApi = apiService.injectEndpoints({
   endpoints: (builder) => ({
     list: builder.query<CourseListResponse, CourseListRequest | void>({
       query: (params) => {
         const queryString = buildQueryString(params ?? {});
         return {
-          url: `${env.NEXT_PUBLIC_API_BASE}/courses${queryString}`,
+          url: resolveInternalApiUrl(`/api/courses${queryString}`),
           method: 'GET',
         };
       },
@@ -80,7 +88,7 @@ export const coursesApi = apiService.injectEndpoints({
     }),
     detail: builder.query<CourseDetailResponse, string>({
       query: (courseId) => ({
-        url: `${env.NEXT_PUBLIC_API_BASE}/courses/${courseId}`,
+        url: resolveInternalApiUrl(`/api/courses/${courseId}`),
         method: 'GET',
       }),
       providesTags: (result, error, courseId) => [{ type: 'Course', id: courseId }],
@@ -88,7 +96,7 @@ export const coursesApi = apiService.injectEndpoints({
     }),
     toggleWishlist: builder.mutation<{ status: 'added' | 'removed' }, { courseId: string; action: 'add' | 'remove' }>({
       query: ({ courseId, action }) => ({
-        url: `${env.NEXT_PUBLIC_API_BASE}/courses/${courseId}/wishlist`,
+        url: resolveInternalApiUrl(`/api/courses/${courseId}/wishlist`),
         method: action === 'add' ? 'POST' : 'DELETE',
       }),
       invalidatesTags: (result, error, { courseId }) => [
