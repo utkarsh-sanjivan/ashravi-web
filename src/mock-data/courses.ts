@@ -1,6 +1,4 @@
-import type { Course } from '@/types';
-
-export const mockCourses: Course[] = [
+export const rawMockCourses = [
   {
     id: '1',
     title: 'Positive Parenting: Building Strong Relationships',

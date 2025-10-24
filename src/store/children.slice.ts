@@ -1,21 +1,23 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction } from '@reduxjs/toolkit';
 
-interface Child {
+import { createAppSlice } from '@/store/utils/createAppSlice';
+
+export interface Child {
   id: string;
   name: string;
   age: number;
   avatar: string;
 }
 
-interface ChildrenState {
+export interface ChildrenState {
   children: Child[];
 }
 
-const initialState: ChildrenState = {
+export const initialState: ChildrenState = {
   children: [],
 };
 
-const childrenSlice = createSlice({
+const childrenSlice = createAppSlice({
   name: 'children',
   initialState,
   reducers: {

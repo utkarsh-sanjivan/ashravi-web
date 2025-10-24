@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 
 import Carousel from '@/components/molecules/Carousel';
@@ -8,33 +8,48 @@ import CourseCard from '@/components/molecules/CourseCard';
 import Button from '@/components/atoms/Button';
 import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
-import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
-import { fetchCourses } from '@/store/courses.slice';
+import { useCoursesListQuery } from '@/store/api/courses.api';
+import { selectMockCourses } from '@/store/selectors/mock.selectors';
 
 import './index.css';
 
-export default function FeaturedCoursesSection() {
-  const dispatch = useAppDispatch();
-  const { courses, loading } = useAppSelector((state) => state.courses);
+export interface FeaturedCoursesSectionProps {
+  title?: string;
+  subtitle?: string;
+  limit?: number;
+  isAuthenticated?: boolean;
+  ctaText?: string;
+  ctaHref?: string;
+  useCarousel?: boolean;
+}
 
-  useEffect(() => {
-    if (courses.length === 0 && !loading) {
-      dispatch(fetchCourses({ page: 1, limit: 6 }));
-    }
-  }, [dispatch, courses.length, loading]);
+export default function FeaturedCoursesSection({
+  title = 'Featured Courses',
+  subtitle = 'Discover our most popular courses chosen by parents like you',
+  limit = 6,
+  ctaText,
+  ctaHref = '/courses',
+  useCarousel = true,
+}: FeaturedCoursesSectionProps) {
+  const { data, isLoading, isFetching, error } = useCoursesListQuery({ page: 1, limit });
+  const devMockCourses = useAppSelector(selectMockCourses);
+  const courses = data?.data ?? [];
+  const shouldUseMock =
+    Boolean(error) && process.env.NODE_ENV !== 'production' && devMockCourses.length > 0;
+  const sourceCourses = shouldUseMock ? devMockCourses.slice(0, limit) : courses;
 
   const featuredCourses = useMemo(() => {
-    if (!courses || !Array.isArray(courses)) {
+    if (!sourceCourses || !Array.isArray(sourceCourses)) {
       return [];
     }
-    
-    return [...courses]
-      .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
-      .slice(0, 6);
-  }, [courses]);
 
-  if (loading && courses.length === 0) {
+    return [...sourceCourses]
+      .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
+      .slice(0, limit);
+  }, [sourceCourses, limit]);
+
+  if ((isLoading || isFetching) && courses.length === 0 && !shouldUseMock) {
     return (
       <section className="featured-courses-section">
         <div className="featured-courses-container">
@@ -51,28 +66,38 @@ export default function FeaturedCoursesSection() {
     <section className="featured-courses-section">
       <div className="featured-courses-container">
         <div className="featured-courses-header">
-          <h2 className="featured-courses-title">Featured Courses</h2>
-          <p className="featured-courses-subtitle">
-            Discover our most popular courses chosen by parents like you
-          </p>
+          <h2 className="featured-courses-title">{title}</h2>
+          <p className="featured-courses-subtitle">{subtitle}</p>
         </div>
 
         {featuredCourses && featuredCourses.length > 0 ? (
           <>
-            <Carousel>
-              {featuredCourses.map((course) =>
-                course && course.id ? (
-                  <CourseCard key={course.id} {...course} />
-                ) : null
-              )}
-            </Carousel>
+            {useCarousel ? (
+              <Carousel>
+                {featuredCourses.map((course) =>
+                  course && course.id ? (
+                    <CourseCard key={course.id} {...course} />
+                  ) : null
+                )}
+              </Carousel>
+            ) : (
+              <div className="featured-courses-grid">
+                {featuredCourses.map((course) =>
+                  course && course.id ? (
+                    <CourseCard key={course.id} {...course} />
+                  ) : null
+                )}
+              </div>
+            )}
 
             <div className="featured-courses-footer">
-              <Link href="/courses">
-                <Button variant="primary" size="lg">
-                  View All Courses
-                </Button>
-              </Link>
+              {ctaText && (
+                <Link href={ctaHref}>
+                  <Button variant="primary" size="lg">
+                    {ctaText}
+                  </Button>
+                </Link>
+              )}
             </div>
           </>
         ) : (

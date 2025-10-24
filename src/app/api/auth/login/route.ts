@@ -1,48 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { env } from '@/config/env';
+import { setAuthCookies } from '@/lib/auth-cookies';
+
+interface LoginRequestBody {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+function normalizeAuthResponse(response: any) {
+  const accessToken =
+    response?.data?.accessToken ||
+    response?.accessToken ||
+    response?.token ||
+    response?.data?.token;
+
+  const refreshToken =
+    response?.data?.refreshToken ||
+    response?.refreshToken;
+
+  const user =
+    response?.data?.user ||
+    response?.user || {
+      id: '',
+      name: '',
+      email: '',
+      role: 'user',
+    };
+
+  return { accessToken, refreshToken, user };
+}
 
 export async function POST(request: NextRequest) {
-  console.log('🔵 Login API route called');
-  
   try {
-    const body = await request.json();
-    console.log('🔵 Login request body:', body);
+    const body: LoginRequestBody = await request.json();
 
-    const { userId, name, email } = body;
-
-    if (!userId || !name || !email) {
-      console.log('🔴 Missing required fields:', { userId, name, email });
+    if (!body.email || !body.password) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Email and password are required' },
         { status: 400 }
       );
     }
 
-    // Create user session
-    const user = {
-      id: userId,
-      name: name,
-      email: email,
-    };
-
-    console.log('🔵 Creating session for user:', user);
-
-    const cookieStore = await cookies();
-    
-    // Set session cookie
-    cookieStore.set('session', JSON.stringify(user), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
+    const upstreamResponse = await fetch(`${env.NEXT_PUBLIC_API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: body.email, password: body.password }),
+      cache: 'no-store',
     });
 
-    console.log('✅ Session cookie set successfully');
+    const result = await upstreamResponse.json().catch(() => null);
 
-    return NextResponse.json({ success: true, user }, { status: 200 });
+    if (!upstreamResponse.ok) {
+      const message = result?.message || result?.error || 'Failed to login';
+      return NextResponse.json({ error: message }, { status: upstreamResponse.status });
+    }
+
+    const { accessToken, refreshToken, user } = normalizeAuthResponse(result);
+
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: 'Login response did not include an access token' },
+        { status: 502 }
+      );
+    }
+
+    await setAuthCookies({
+      accessToken,
+      refreshToken,
+      user,
+      remember: body.rememberMe,
+    });
+
+    return NextResponse.json({
+      success: true,
+      user,
+      message: result?.message || 'Login successful',
+    });
   } catch (error) {
-    console.error('🔴 Login error:', error);
+    console.error('Login error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to login' },
       { status: 500 }

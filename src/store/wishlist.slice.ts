@@ -1,14 +1,26 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction } from '@reduxjs/toolkit';
 
-interface WishlistState {
+import { coursesApi } from '@/store/api/courses.api';
+import { createAppSlice } from '@/store/utils/createAppSlice';
+import { resolveRejectedActionError } from '@/store/utils/error';
+
+export type LoadingStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
+
+export interface WishlistState {
   courseIds: string[];
+  pending: Record<string, 'adding' | 'removing'>;
+  status: LoadingStatus;
+  error: string | null;
 }
 
-const initialState: WishlistState = {
+export const initialState: WishlistState = {
   courseIds: [],
+  pending: {},
+  status: 'idle',
+  error: null,
 };
 
-const wishlistSlice = createSlice({
+const wishlistSlice = createAppSlice({
   name: 'wishlist',
   initialState,
   reducers: {
@@ -22,9 +34,45 @@ const wishlistSlice = createSlice({
     },
     clearWishlist: (state) => {
       state.courseIds = [];
+      state.pending = {};
     },
+    markWishlistPending: (state, action: PayloadAction<{ courseId: string; direction: 'adding' | 'removing' }>) => {
+      state.pending[action.payload.courseId] = action.payload.direction;
+    },
+    clearWishlistPending: (state, action: PayloadAction<string>) => {
+      delete state.pending[action.payload];
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addMatcher(coursesApi.endpoints.toggleWishlist.matchPending, (state, action) => {
+        state.status = 'loading';
+        state.error = null;
+        const courseId = action.meta.arg.originalArgs.courseId;
+        state.pending[courseId] = action.meta.arg.originalArgs.action === 'add' ? 'adding' : 'removing';
+      })
+      .addMatcher(coursesApi.endpoints.toggleWishlist.matchFulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.error = null;
+        const courseId = action.meta.arg.originalArgs.courseId;
+        delete state.pending[courseId];
+      })
+      .addMatcher(coursesApi.endpoints.toggleWishlist.matchRejected, (state, action) => {
+        state.status = 'failed';
+        const courseId = action.meta.arg.originalArgs.courseId;
+        delete state.pending[courseId];
+        const resolved = resolveRejectedActionError(action, 'Unable to update wishlist');
+        state.error = resolved.message;
+      });
   },
 });
 
-export const { addToWishlist, removeFromWishlist, clearWishlist } = wishlistSlice.actions;
+export const {
+  addToWishlist,
+  removeFromWishlist,
+  clearWishlist,
+  markWishlistPending,
+  clearWishlistPending,
+} = wishlistSlice.actions;
+
 export default wishlistSlice.reducer;

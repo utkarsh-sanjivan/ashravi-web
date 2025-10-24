@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 
 import Carousel from '@/components/molecules/Carousel';
@@ -8,33 +8,46 @@ import CourseCard from '@/components/molecules/CourseCard';
 import Button from '@/components/atoms/Button';
 import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
-import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
-import { fetchCourses } from '@/store/courses.slice';
+import { useCoursesListQuery } from '@/store/api/courses.api';
+import { selectMockCourses } from '@/store/selectors/mock.selectors';
 
 import './index.css';
 
-export default function PopularCoursesSection() {
-  const dispatch = useAppDispatch();
-  const { courses, loading, error } = useAppSelector((state) => state.courses);
+export interface PopularCoursesSectionProps {
+  title?: string;
+  subtitle?: string;
+  limit?: number;
+  ctaText?: string;
+  ctaHref?: string;
+  isAuthenticated?: boolean;
+}
 
-  useEffect(() => {
-    if (courses.length === 0 && !loading) {
-      dispatch(fetchCourses({ page: 1, limit: 6 }));
-    }
-  }, [dispatch, courses.length, loading]);
+export default function PopularCoursesSection({
+  title = 'Popular Courses',
+  subtitle = 'Most loved courses by our community',
+  limit = 6,
+  ctaText = 'View All Courses',
+  ctaHref = '/courses',
+}: PopularCoursesSectionProps) {
+  const { data, isLoading, isFetching, error, refetch } = useCoursesListQuery({ page: 1, limit });
+  const devMockCourses = useAppSelector(selectMockCourses);
+  const courses = data?.data ?? [];
+  const shouldUseMock =
+    Boolean(error) && process.env.NODE_ENV !== 'production' && devMockCourses.length > 0;
+  const sourceCourses = shouldUseMock ? devMockCourses.slice(0, limit) : courses;
 
   const popularCourses = useMemo(() => {
-    if (!courses || !Array.isArray(courses)) {
+    if (!sourceCourses || !Array.isArray(sourceCourses)) {
       return [];
     }
-    
-    return [...courses]
-      .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
-      .slice(0, 6);
-  }, [courses]);
 
-  if (loading && courses.length === 0) {
+    return [...sourceCourses]
+      .sort((a, b) => (a?.title || '').localeCompare(b?.title || ''))
+      .slice(0, limit);
+  }, [sourceCourses, limit]);
+
+  if ((isLoading || isFetching) && courses.length === 0 && !shouldUseMock) {
     return (
       <section className="popular-courses-section">
         <div className="popular-courses-container">
@@ -47,13 +60,13 @@ export default function PopularCoursesSection() {
     );
   }
 
-  if (error) {
+  if (error && !shouldUseMock) {
     return (
       <section className="popular-courses-section">
         <div className="popular-courses-container">
           <div className="popular-courses-error">
             <p>Failed to load courses</p>
-            <Button onClick={() => dispatch(fetchCourses({ page: 1, limit: 6 }))} variant="primary">
+            <Button onClick={() => refetch()} variant="primary">
               Try Again
             </Button>
           </div>
@@ -64,17 +77,15 @@ export default function PopularCoursesSection() {
 
   return (
     <section className="popular-courses-section">
-      <div className="popular-courses-container">
-        <div className="popular-courses-header">
-          <h2 className="popular-courses-title">Popular Courses</h2>
-          <p className="popular-courses-subtitle">
-            Most loved courses by our community
-          </p>
-        </div>
+        <div className="popular-courses-container">
+          <div className="popular-courses-header">
+          <h2 className="popular-courses-title">{title}</h2>
+          <p className="popular-courses-subtitle">{subtitle}</p>
+          </div>
 
-        {popularCourses && popularCourses.length > 0 ? (
-          <>
-            <Carousel>
+          {popularCourses && popularCourses.length > 0 ? (
+            <>
+              <Carousel>
               {popularCourses.map((course) =>
                 course && course.id ? (
                   <CourseCard key={course.id} {...course} />
@@ -83,9 +94,9 @@ export default function PopularCoursesSection() {
             </Carousel>
 
             <div className="popular-courses-footer">
-              <Link href="/courses">
+              <Link href={ctaHref}>
                 <Button variant="primary" size="lg">
-                  View All Courses
+                  {ctaText}
                 </Button>
               </Link>
             </div>
@@ -93,8 +104,8 @@ export default function PopularCoursesSection() {
         ) : (
           <div className="popular-courses-empty">
             <p>No popular courses available at the moment.</p>
-            <Link href="/courses">
-              <Button variant="primary">Browse All Courses</Button>
+            <Link href={ctaHref}>
+              <Button variant="primary">{ctaText}</Button>
             </Link>
           </div>
         )}

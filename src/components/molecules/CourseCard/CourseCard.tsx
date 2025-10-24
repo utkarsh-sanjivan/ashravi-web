@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -8,6 +8,14 @@ import HeartIcon from '@/components/icons/HeartIcon';
 import StarIcon from '@/components/icons/StarIcon';
 import ClockIcon from '@/components/icons/ClockIcon';
 import UserIcon from '@/components/icons/UserIcon';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { useFeatureModule } from '@/hooks/useFeatureModule';
+import { selectIsAuthenticated } from '@/store/selectors/user.selectors';
+import {
+  makeSelectIsCourseWishlisted,
+  makeSelectIsWishlistPending,
+} from '@/store/selectors/wishlist.selectors';
+import { coursesApi, useToggleWishlistMutation } from '@/store/api/courses.api';
 
 import './index.css';
 
@@ -47,20 +55,42 @@ export interface CourseCardProps {
 
 export default function CourseCard(props: CourseCardProps) {
   const router = useRouter();
-  const [isWishlisted, setIsWishlisted] = useState(props.isWishlisted ?? false);
+  const makeWishlistedSelector = useMemo(makeSelectIsCourseWishlisted, []);
+  const makePendingSelector = useMemo(makeSelectIsWishlistPending, []);
+  const wishlistReady = useFeatureModule('wishlist');
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const isWishlistedFromStore = useAppSelector((state) =>
+    makeWishlistedSelector(state, props.id)
+  );
+  const isPendingFromStore = useAppSelector((state) =>
+    makePendingSelector(state, props.id)
+  );
+  const [toggleWishlist, { isLoading: isMutating }] = useToggleWishlistMutation();
+  const prefetchCourseDetail = coursesApi.usePrefetch('detail');
+  const isWishlisted = wishlistReady
+    ? isWishlistedFromStore
+    : Boolean(props.isWishlisted);
+  const isPending = wishlistReady ? isPendingFromStore : false;
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const user = localStorage.getItem('user');
-
-    if (!user) {
+    if (!isAuthenticated) {
       router.push('/auth/login');
       return;
     }
 
-    setIsWishlisted(!isWishlisted);
+    if (!wishlistReady || isPending || isMutating) {
+      return;
+    }
+
+    const action = isWishlisted ? 'remove' : 'add';
+    toggleWishlist({ courseId: props.id, action }).catch((error) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Failed to toggle wishlist', error);
+      }
+    });
   };
 
   const formatPrice = (price: number): string => {
@@ -121,7 +151,12 @@ export default function CourseCard(props: CourseCardProps) {
     : 0;
 
   return (
-    <Link href={`/courses/${props.id}`} className="course-card">
+    <Link
+      href={`/courses/${props.id}`}
+      className="course-card"
+      onMouseEnter={() => prefetchCourseDetail(props.id)}
+      onFocus={() => prefetchCourseDetail(props.id)}
+    >
       <div className="course-card-image-container">
         <img src={thumbnail} alt={title} className="course-card-image" />
 
@@ -142,6 +177,8 @@ export default function CourseCard(props: CourseCardProps) {
           onClick={handleWishlistClick}
           className="course-card-wishlist"
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          disabled={!wishlistReady || isPending || isMutating}
+          aria-busy={!wishlistReady || isPending || isMutating}
         >
           <HeartIcon filled={isWishlisted} />
         </button>

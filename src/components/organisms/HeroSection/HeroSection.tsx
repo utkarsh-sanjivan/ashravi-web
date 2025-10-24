@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import { ChevronDownIcon } from '@/components/icons';

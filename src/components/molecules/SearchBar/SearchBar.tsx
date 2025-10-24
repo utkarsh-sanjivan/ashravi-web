@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchIcon } from '@/components/icons';
+import { useLazyCoursesListQuery } from '@/store/api/courses.api';
 import './index.css';
 
 interface SearchSuggestion {
@@ -26,6 +27,7 @@ export default function SearchBar({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchRef = useRef<HTMLDivElement>(null);
+  const [fetchSuggestions, { data: suggestionData, isFetching }] = useLazyCoursesListQuery();
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -41,39 +43,38 @@ export default function SearchBar({
 
   // Fetch suggestions as user types
   useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (query.trim().length < 2) {
-        setSuggestions([]);
-        return;
-      }
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsLoading(false);
+      return;
+    }
 
-      setIsLoading(true);
-      try {
-        // TODO: Replace with actual API call
-        // const response = await fetch(`/api/courses/search?q=${encodeURIComponent(query)}&limit=5`);
-        // const data = await response.json();
-        
-        // Mock suggestions for now
-        const mockSuggestions: SearchSuggestion[] = [
-          { id: '1', title: 'Positive Parenting Basics', category: 'Parenting' },
-          { id: '2', title: 'Managing Tantrums', category: 'Behavior' },
-          { id: '3', title: 'Sleep Training for Toddlers', category: 'Sleep' },
-          { id: '4', title: 'Communication Skills', category: 'Development' },
-          { id: '5', title: 'Discipline Strategies', category: 'Parenting' },
-        ].filter(s => s.title.toLowerCase().includes(query.toLowerCase()));
-
-        setSuggestions(mockSuggestions);
-        setShowSuggestions(true);
-      } catch (error) {
-        console.error('Failed to fetch suggestions:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(fetchSuggestions, 300);
+    setIsLoading(true);
+    setShowSuggestions(true);
+    const debounceTimer = setTimeout(() => {
+      fetchSuggestions({ search: trimmed, limit: 5 });
+    }, 300);
     return () => clearTimeout(debounceTimer);
-  }, [query]);
+  }, [query, fetchSuggestions]);
+
+  useEffect(() => {
+    if (suggestionData?.data) {
+      const mapped: SearchSuggestion[] = suggestionData.data.slice(0, 5).map((course) => ({
+        id: course.id,
+        title: course.title,
+        category: course.category ?? 'Course',
+      }));
+
+      setSuggestions(mapped);
+      setShowSuggestions(true);
+    }
+
+    if (!isFetching) {
+      setIsLoading(false);
+    }
+  }, [suggestionData, isFetching]);
 
   const handleSearch = (searchQuery: string = query) => {
     if (!searchQuery.trim()) return;

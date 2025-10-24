@@ -8,7 +8,8 @@ import Button from '@/components/atoms/Button';
 import Checkbox from '@/components/atoms/Checkbox';
 import SocialLoginButton from '@/components/molecules/SocialLoginButton';
 import { MailIcon, PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from '@/components/icons';
-import authService from '@/services/authService';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { useLoginMutation } from '@/store/api/auth.api';
 import './index.css';
 
 type LoginMethod = 'email' | 'phone';
@@ -20,6 +21,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [login] = useLoginMutation();
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
 
   // Check if user just registered
   const justRegistered = searchParams.get('registered') === 'true';
@@ -42,10 +45,10 @@ export default function LoginPage() {
 
   // Check if user is already logged in
   useEffect(() => {
-    if (authService.isAuthenticated()) {
+    if (isAuthenticated) {
       router.push('/');
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   // Resend timer effect
   useEffect(() => {
@@ -96,76 +99,32 @@ export default function LoginPage() {
 
     try {
       // Call the real login API
-      const response = await authService.login({
+      await login({
         email,
         password,
-      });
+        rememberMe,
+      }).unwrap();
 
-      if (response.success && response.data && response.data.accessToken) {
-        console.log('✅ Login successful in component!');
-        console.log('🔑 Access token from response:', response.data.accessToken.substring(0, 30) + '...');
-        
-        // Double-check localStorage
-        const storedToken = localStorage.getItem('accessToken');
-        console.log('💾 Access token in localStorage:', storedToken ? `${storedToken.substring(0, 30)}...` : 'NOT FOUND');
-        
-        if (!storedToken) {
-          console.error('❌ CRITICAL: Token not in localStorage after authService.login()');
-          console.error('🔧 Manually storing tokens...');
-          localStorage.setItem('accessToken', response.data.accessToken);
-          if (response.data.refreshToken) {
-            localStorage.setItem('refreshToken', response.data.refreshToken);
-          }
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-        
-        // Set cookies for server-side access
-        const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60;
-        
-        // Set access token cookie
-        document.cookie = `accessToken=${response.data.accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        
-        // Set refresh token cookie if available
-        if (response.data.refreshToken) {
-          document.cookie = `refreshToken=${response.data.refreshToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
-          console.log('🍪 Refresh token cookie set');
-        }
-        
-        console.log('🍪 Access token cookie set');
-        console.log('📦 All cookies:', document.cookie);
-        
-        // Final verification before redirect
-        console.log('🔍 FINAL CHECK before redirect:');
-        console.log('  - localStorage accessToken:', localStorage.getItem('accessToken') ? 'EXISTS' : 'MISSING');
-        console.log('  - localStorage refreshToken:', localStorage.getItem('refreshToken') ? 'EXISTS' : 'MISSING');
-        console.log('  - localStorage user:', localStorage.getItem('user') ? 'EXISTS' : 'MISSING');
-        console.log('  - cookies:', document.cookie ? 'EXISTS' : 'MISSING');
-        
-        // Wait a bit for storage operations
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Hard refresh to ensure everything is loaded
-        const redirectUrl = searchParams?.get?.('redirect') || '/';
-        console.log('🚀 Redirecting to:', redirectUrl);
-        window.location.href = redirectUrl;
-      } else {
-        console.error('❌ Invalid response structure:', response);
-        setGeneralError('Login failed: Invalid response from server');
-      }
+      const redirectUrl = searchParams?.get?.('redirect') || '/';
+      router.push(redirectUrl);
+      router.refresh();
     } catch (error: any) {
       console.error('Login error:', error);
-      
-      // Handle specific error messages
-      const errorMessage = error.message || 'An error occurred. Please try again.';
-      
-      if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('user')) {
-        setEmailError('Invalid email or user not found');
-      } else if (errorMessage.toLowerCase().includes('password') || errorMessage.toLowerCase().includes('credential')) {
-        setPasswordError('Invalid password');
-      } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
-        setGeneralError('Network error. Please check your connection and try again.');
+
+      const errorMessage = error?.data?.message || error?.data?.error || error?.message || 'An error occurred. Please try again.';
+
+      if (typeof errorMessage === 'string') {
+        if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('user')) {
+          setEmailError('Invalid email or user not found');
+        } else if (errorMessage.toLowerCase().includes('password') || errorMessage.toLowerCase().includes('credential')) {
+          setPasswordError('Invalid password');
+        } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
+          setGeneralError('Network error. Please check your connection and try again.');
+        } else {
+          setGeneralError(errorMessage);
+        }
       } else {
-        setGeneralError(errorMessage);
+        setGeneralError('Failed to login. Please try again.');
       }
     } finally {
       setIsLoading(false);
