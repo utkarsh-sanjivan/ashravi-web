@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 import { env } from '@/config/env';
 import { clearAuthCookies, getRefreshTokenFromCookies, setAuthCookies } from '@/lib/auth-cookies';
@@ -14,14 +15,8 @@ function normalizeAuthResponse(response: any) {
     response?.data?.refreshToken ||
     response?.refreshToken;
 
-  const user =
-    response?.data?.user ||
-    response?.user || {
-      id: '',
-      name: '',
-      email: '',
-      role: 'user',
-    };
+  const userPayload = response?.data?.user ?? response?.user;
+  const user = userPayload && typeof userPayload === 'object' ? userPayload : undefined;
 
   return { accessToken, refreshToken, user };
 }
@@ -54,6 +49,22 @@ export async function POST() {
     }
 
     const { accessToken, refreshToken, user } = normalizeAuthResponse(result);
+    const cookieStore = await cookies();
+    const previousSession = cookieStore.get('session');
+    const previousUser = (() => {
+      if (!previousSession?.value) {
+        return undefined;
+      }
+
+      try {
+        return JSON.parse(previousSession.value) as unknown;
+      } catch (error) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[api/auth/refresh] Failed to parse existing session cookie', error);
+        }
+        return undefined;
+      }
+    })();
 
     if (!accessToken) {
       return NextResponse.json(
@@ -70,7 +81,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      user,
+      user: user ?? previousUser ?? null,
     });
   } catch (error) {
     console.error('Refresh token error:', error);
