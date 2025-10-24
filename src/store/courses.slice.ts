@@ -1,122 +1,62 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction } from '@reduxjs/toolkit';
 
-import { fetchCoursesFromAPI } from '@/lib/api';
+import { coursesApi } from '@/store/api/courses.api';
+import { createAppSlice } from '@/store/utils/createAppSlice';
+import { resolveRejectedActionError } from '@/store/utils/error';
 
-import type { Course } from '@/types';
+export type LoadingStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
-interface CourseState {
-  courses: Course[];
-  loading: boolean;
-  error: string | null;
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  filters: {
-    category?: string;
-    level?: string[];
-    search?: string;
-  };
+export interface CourseFiltersState {
+  category?: string;
+  level?: string[];
+  search?: string;
 }
 
-const initialState: CourseState = {
-  courses: [],
-  loading: false,
-  error: null,
+export interface CourseState {
+  currentPage: number;
+  filters: CourseFiltersState;
+  status: LoadingStatus;
+  error: string | null;
+}
+
+export const initialState: CourseState = {
   currentPage: 1,
-  totalPages: 1,
-  totalItems: 0,
   filters: {},
+  status: 'idle',
+  error: null,
 };
 
-// Async Thunks
-export const fetchCourses = createAsyncThunk(
-  'courses/fetchCourses',
-  async (params: {
-    page?: number;
-    limit?: number;
-    category?: string;
-    level?: string;
-    search?: string;
-  }) => {
-    // Convert comma-separated level string to array
-    const levelArray = params.level ? params.level.split(',') : undefined;
-    
-    return await fetchCoursesFromAPI({
-      page: params.page,
-      limit: params.limit,
-      category: params.category,
-      level: levelArray,
-      search: params.search,
-    });
-  }
-);
-
-export const searchCourses = createAsyncThunk(
-  'courses/searchCourses',
-  async (searchQuery: string) => {
-    return await fetchCoursesFromAPI({
-      search: searchQuery,
-      page: 1,
-      limit: 20,
-    });
-  }
-);
-
-const courseSlice = createSlice({
+const courseSlice = createAppSlice({
   name: 'courses',
   initialState,
   reducers: {
-    setFilters: (
-      state,
-      action: PayloadAction<{
-        category?: string;
-        level?: string[];
-        search?: string;
-      }>
-    ) => {
+    setFilters: (state, action: PayloadAction<CourseFiltersState>) => {
       state.filters = action.payload;
+      state.currentPage = 1;
     },
     clearFilters: (state) => {
       state.filters = {};
+      state.currentPage = 1;
     },
     setCurrentPage: (state, action: PayloadAction<number>) => {
       state.currentPage = action.payload;
     },
   },
   extraReducers: (builder) => {
-    // Fetch Courses
-    builder.addCase(fetchCourses.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchCourses.fulfilled, (state, action) => {
-      state.loading = false;
-      state.courses = action.payload.data;
-      state.currentPage = action.payload.pagination.currentPage;
-      state.totalPages = action.payload.pagination.totalPages;
-      state.totalItems = action.payload.pagination.totalItems;
-    });
-    builder.addCase(fetchCourses.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message || 'Failed to fetch courses';
-    });
-
-    // Search Courses
-    builder.addCase(searchCourses.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(searchCourses.fulfilled, (state, action) => {
-      state.loading = false;
-      state.courses = action.payload.data;
-      state.currentPage = action.payload.pagination.currentPage;
-      state.totalPages = action.payload.pagination.totalPages;
-      state.totalItems = action.payload.pagination.totalItems;
-    });
-    builder.addCase(searchCourses.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message || 'Failed to search courses';
-    });
+    builder
+      .addMatcher(coursesApi.endpoints.list.matchPending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addMatcher(coursesApi.endpoints.list.matchFulfilled, (state) => {
+        state.status = 'succeeded';
+        state.error = null;
+      })
+      .addMatcher(coursesApi.endpoints.list.matchRejected, (state, action) => {
+        state.status = 'failed';
+        const resolved = resolveRejectedActionError(action, 'Unable to load courses');
+        state.error = resolved.message;
+      });
   },
 });
 

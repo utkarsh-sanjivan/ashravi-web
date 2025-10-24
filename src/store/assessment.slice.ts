@@ -1,20 +1,22 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction } from '@reduxjs/toolkit';
 
-interface AssessmentState {
+import { createAppSlice } from '@/store/utils/createAppSlice';
+
+export interface AssessmentState {
   currentChildId: string | null;
   currentQuestionIndex: number;
   answers: Record<string, any>;
   completed: boolean;
 }
 
-const initialState: AssessmentState = {
+export const initialState: AssessmentState = {
   currentChildId: null,
   currentQuestionIndex: 0,
   answers: {},
   completed: false,
 };
 
-const assessmentSlice = createSlice({
+const assessmentSlice = createAppSlice({
   name: 'assessment',
   initialState,
   reducers: {

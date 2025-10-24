@@ -1,6 +1,8 @@
+import { headers } from 'next/headers';
+import type { Metadata } from 'next';
+
 import { isAuthenticated } from '@/lib/auth';
 import RootPageWrapper from '@/components/pages/RootPageWrapper';
-import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Ashravi - Empowering Parents',
@@ -8,8 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default async function RootPage() {
-  // Check authentication on server
-  const authenticated = await isAuthenticated();
+  const headerList = await headers();
+  const preverified = headerList.get('x-authenticated') === 'true';
+  const authenticated = preverified ? true : await isAuthenticated();
 
   console.log('🔐 Server-side authentication check:', authenticated);
 

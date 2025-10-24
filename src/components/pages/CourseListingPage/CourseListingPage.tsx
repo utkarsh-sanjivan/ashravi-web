@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 import PublicNavbar from '@/components/organisms/PublicNavbar';
@@ -15,7 +15,18 @@ import SpinnerIcon from '@/components/icons/SpinnerIcon';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
-import { fetchCourses, searchCourses, setCurrentPage } from '@/store/courses.slice';
+import { useFeatureModules } from '@/hooks/useFeatureModule';
+import type { FeatureModuleKey } from '@/store/modules/registry';
+import { clearFilters, setCurrentPage, setFilters as setCourseFilters } from '@/store/courses.slice';
+import { coursesApi, useCoursesListQuery } from '@/store/api/courses.api';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import {
+  selectCourseCurrentPage,
+  selectCoursesError,
+  selectCoursesStatus,
+} from '@/store/selectors/courses.selectors';
+import { selectMockCourses } from '@/store/selectors/mock.selectors';
+import type { LoadingStatus } from '@/store/courses.slice';
 
 import type { FilterState, SortOption } from '@/types';
 
@@ -23,81 +34,143 @@ import './index.css';
 
 const ITEMS_PER_PAGE = 20;
 
-export default function CourseListingPage() {
+export interface CourseListingPageProps {
+  initialFilters?: FilterState;
+  initialSearch?: string;
+}
+
+const DEFAULT_FILTERS: FilterState = {
+  priceRange: [0, 200],
+  isFree: false,
+  duration: [],
+  level: [],
+  rating: null,
+};
+
+const cloneDefaultFilters = (): FilterState => ({
+  priceRange: [...DEFAULT_FILTERS.priceRange] as [number, number],
+  isFree: DEFAULT_FILTERS.isFree,
+  duration: [...DEFAULT_FILTERS.duration],
+  level: [...DEFAULT_FILTERS.level],
+  rating: DEFAULT_FILTERS.rating,
+});
+
+export default function CourseListingPage({
+  initialFilters,
+  initialSearch,
+}: CourseListingPageProps) {
+  const { isAuthenticated, isChecking } = useAuthGuard({ redirectTo: '/auth/login' });
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  
-  const { courses, loading, error, currentPage, totalPages, totalItems } = useAppSelector(
-    (state) => state.courses
+  const requestedFeatures = useMemo<FeatureModuleKey[]>(
+    () =>
+      process.env.NODE_ENV !== 'production'
+        ? ['courses', 'wishlist', 'mock']
+        : ['courses', 'wishlist'],
+    []
   );
+  const featuresReady = useFeatureModules(requestedFeatures);
 
-  const initialQuery = searchParams.get('q') || '';
+  const currentPage = useAppSelector(selectCourseCurrentPage);
+  const devMockCourses = useAppSelector(selectMockCourses);
+  const coursesStatus = useAppSelector(selectCoursesStatus);
+  const coursesError = useAppSelector(selectCoursesError);
+
+  const initialQuery = searchParams.get('q') ?? initialSearch ?? '';
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [filters, setFilters] = useState<FilterState>({
-    priceRange: [0, 200],
-    isFree: false,
-    duration: [],
-    level: [],
-    rating: null,
-  });
+  const [filters, setLocalFilters] = useState<FilterState>(
+    initialFilters ?? cloneDefaultFilters()
+  );
 
-  // Initial load or when search query changes from navbar
+  useEffect(() => {
+    if (initialFilters) {
+      setLocalFilters(initialFilters);
+    } else {
+      setLocalFilters(cloneDefaultFilters());
+    }
+  }, [initialFilters]);
+
   useEffect(() => {
     if (initialQuery) {
-      dispatch(searchCourses(initialQuery));
       setSearchQuery(initialQuery);
-    } else {
-      dispatch(
-        fetchCourses({
-          page: 1,
-          limit: ITEMS_PER_PAGE,
-        })
-      );
+      dispatch(setCourseFilters({ search: initialQuery }));
+      dispatch(setCurrentPage(1));
     }
   }, [initialQuery, dispatch]);
 
+  const queryArgs = useMemo(() => {
+    const [minPrice, maxPrice] = filters.priceRange;
+    const includePrice = filters.isFree || minPrice > 0 || maxPrice < 200;
+
+    return {
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+      search: searchQuery.trim() ? searchQuery.trim() : undefined,
+      level: filters.level.length > 0 ? filters.level.map((level) => level.toLowerCase()) : undefined,
+      ...(includePrice
+        ? filters.isFree
+          ? { minPrice: 0, maxPrice: 0 }
+          : { minPrice, maxPrice }
+        : {}),
+      rating: filters.rating ?? undefined,
+    };
+  }, [currentPage, filters, searchQuery]);
+
+  const { data, isFetching, isLoading, error } = useCoursesListQuery(queryArgs, {
+    skip: !isAuthenticated,
+  });
+
+  const prefetchCoursesList = coursesApi.usePrefetch('list');
+
+  const coursesFromApi = data?.data ?? [];
+  const shouldUseMock =
+    Boolean(error) && process.env.NODE_ENV !== 'production' && devMockCourses.length > 0;
+  const courses = shouldUseMock ? devMockCourses : coursesFromApi;
+
+  const pagination = data?.pagination;
+  const totalItems = shouldUseMock
+    ? devMockCourses.length
+    : pagination?.totalItems ?? courses.length;
+  const totalPages = shouldUseMock
+    ? Math.max(1, Math.ceil(devMockCourses.length / ITEMS_PER_PAGE))
+    : pagination?.totalPages ?? 1;
+  const statusIsLoading: LoadingStatus = isLoading || isFetching ? 'loading' : coursesStatus;
+  const resolvedErrorMessage =
+    (error && 'message' in error && typeof error.message === 'string'
+      ? error.message
+      : coursesError) ?? 'Failed to load courses. Please try again.';
+  const hasError = !shouldUseMock && (Boolean(error) || Boolean(coursesError));
+
   const handleFilterChange = useCallback((newFilters: FilterState) => {
-    setFilters(newFilters);
-    
-    const level = newFilters.level.length > 0 ? newFilters.level.join(',') : undefined;
-    
-    dispatch(
-      fetchCourses({
-        page: 1,
-        limit: ITEMS_PER_PAGE,
-        level,
-        search: searchQuery || undefined,
-      })
-    );
+    setLocalFilters(newFilters);
+    dispatch(setCourseFilters({
+      search: searchQuery || undefined,
+      level: newFilters.level,
+    }));
+    dispatch(setCurrentPage(1));
   }, [dispatch, searchQuery]);
 
   const handleSearch = useCallback(
     (query: string) => {
+      const trimmed = query.trim();
       setSearchQuery(query);
-      
-      // Update URL with search query
+      dispatch(setCourseFilters({
+        search: trimmed || undefined,
+        level: filters.level,
+      }));
+      dispatch(setCurrentPage(1));
+
       const params = new URLSearchParams();
-      if (query.trim()) {
-        params.set('q', query);
-        dispatch(searchCourses(query));
-      } else {
-        dispatch(
-          fetchCourses({
-            page: 1,
-            limit: ITEMS_PER_PAGE,
-          })
-        );
+      if (trimmed) {
+        params.set('q', trimmed);
       }
-      
-      // Update URL
-      const newUrl = query.trim() 
-        ? `/courses?${params.toString()}` 
-        : '/courses';
+
+      const newUrl = trimmed ? `/courses?${params.toString()}` : '/courses';
       router.push(newUrl, { scroll: false });
     },
-    [dispatch, router]
+    [dispatch, router, filters.level]
   );
 
   const handleSortChange = useCallback((newSort: SortOption) => {
@@ -106,64 +179,90 @@ export default function CourseListingPage() {
 
   const handlePageChange = useCallback(
     (page: number) => {
-      dispatch(setCurrentPage(page));
-      dispatch(
-        fetchCourses({
+      if (isAuthenticated) {
+        prefetchCoursesList({
+          ...queryArgs,
           page,
-          limit: ITEMS_PER_PAGE,
-          search: searchQuery || undefined,
-        })
-      );
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+      dispatch(setCurrentPage(page));
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     },
-    [dispatch, searchQuery]
+    [dispatch, prefetchCoursesList, queryArgs, isAuthenticated]
   );
 
   const handleResetFilters = useCallback(() => {
-    setFilters({
-      priceRange: [0, 200],
-      isFree: false,
-      duration: [],
-      level: [],
-      rating: null,
-    });
+    setLocalFilters(cloneDefaultFilters());
     setSearchQuery('');
-    
-    // Clear URL params
+    dispatch(clearFilters());
+    dispatch(setCurrentPage(1));
     router.push('/courses', { scroll: false });
-    
-    dispatch(
-      fetchCourses({
-        page: 1,
-        limit: ITEMS_PER_PAGE,
-      })
-    );
   }, [dispatch, router]);
 
   // Client-side sorting of courses
-  const sortedCourses = [...courses].sort((a, b) => {
-    switch (sortBy) {
-      case 'alphabetical-asc':
-        return a.title.localeCompare(b.title);
-      case 'alphabetical-desc':
-        return b.title.localeCompare(a.title);
-      case 'rating':
-        const ratingA = typeof a.rating === 'object' ? a.rating.average : a.rating;
-        const ratingB = typeof b.rating === 'object' ? b.rating.average : b.rating;
-        return ratingB - ratingA;
-      case 'price-low':
-        const priceA = typeof a.price === 'object' ? a.price.amount : a.price;
-        const priceB = typeof b.price === 'object' ? b.price.amount : b.price;
-        return priceA - priceB;
-      case 'price-high':
-        const priceHighA = typeof a.price === 'object' ? a.price.amount : a.price;
-        const priceHighB = typeof b.price === 'object' ? b.price.amount : b.price;
-        return priceHighB - priceHighA;
-      case 'newest':
-      default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  const sortedCourses = useMemo(() => {
+    const ordered = [...courses].sort((a, b) => {
+      switch (sortBy) {
+        case 'alphabetical-asc':
+          return a.title.localeCompare(b.title);
+        case 'alphabetical-desc':
+          return b.title.localeCompare(a.title);
+        case 'rating':
+          const ratingA = typeof a.rating === 'object' ? a.rating.average : a.rating;
+          const ratingB = typeof b.rating === 'object' ? b.rating.average : b.rating;
+          return ratingB - ratingA;
+        case 'price-low':
+          const priceA = typeof a.price === 'object' ? a.price.amount : a.price;
+          const priceB = typeof b.price === 'object' ? b.price.amount : b.price;
+          return priceA - priceB;
+        case 'price-high':
+          const priceHighA = typeof a.price === 'object' ? a.price.amount : a.price;
+          const priceHighB = typeof b.price === 'object' ? b.price.amount : b.price;
+          return priceHighB - priceHighA;
+        case 'newest':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+
+    if (shouldUseMock) {
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      return ordered.slice(start, start + ITEMS_PER_PAGE);
     }
-  });
+
+    return ordered;
+  }, [courses, sortBy, shouldUseMock, currentPage]);
+
+  const renderGuardMessage = (message: string) => (
+    <div className="course-listing-page">
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '50vh',
+          gap: '0.75rem',
+          color: '#1f2937',
+        }}
+        role="status"
+        aria-live="polite"
+      >
+        <SpinnerIcon />
+        <span>{message}</span>
+      </div>
+    </div>
+  );
+
+  if (isChecking || !featuresReady) {
+    return renderGuardMessage('Checking your session…');
+  }
+
+  if (!isAuthenticated) {
+    return renderGuardMessage('Redirecting to login…');
+  }
 
   return (
     <div className="course-listing-page">
@@ -202,7 +301,7 @@ export default function CourseListingPage() {
           </div>
 
           {/* Loading State */}
-          {loading && (
+          {statusIsLoading === 'loading' && (
             <div className="course-listing-loading">
               <SpinnerIcon size={48} />
               <p>Loading courses...</p>
@@ -210,9 +309,11 @@ export default function CourseListingPage() {
           )}
 
           {/* Error State */}
-          {error && (
+          {hasError && (
             <div className="course-listing-error">
-              <p className="course-listing-error-text">{error}</p>
+              <p className="course-listing-error-text">
+                {resolvedErrorMessage}
+              </p>
               <Button onClick={handleResetFilters} variant="primary">
                 Try Again
               </Button>
@@ -220,7 +321,7 @@ export default function CourseListingPage() {
           )}
 
           {/* Course Grid */}
-          {!loading && !error && sortedCourses.length > 0 && (
+          {statusIsLoading !== 'loading' && !hasError && sortedCourses.length > 0 && (
             <>
               <CourseGrid courses={sortedCourses} />
 
@@ -238,7 +339,7 @@ export default function CourseListingPage() {
           )}
 
           {/* Empty State */}
-          {!loading && !error && sortedCourses.length === 0 && (
+          {statusIsLoading !== 'loading' && !hasError && sortedCourses.length === 0 && (
             <div className="course-listing-empty">
               <div className="course-listing-empty-content">
                 <h3 className="course-listing-empty-title">No courses found</h3>

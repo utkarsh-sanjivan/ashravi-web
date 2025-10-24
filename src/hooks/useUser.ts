@@ -1,6 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
+
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { useProfileQuery } from '@/store/api/auth.api';
+import { selectIsAuthenticated, selectUserProfile } from '@/store/selectors/user.selectors';
 
 interface User {
   id: string;
@@ -14,41 +18,28 @@ interface User {
 }
 
 export function useUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const userState = useAppSelector(selectUserProfile);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const { isFetching } = useProfileQuery(undefined, {
+    skip: isAuthenticated,
+  });
 
-  useEffect(() => {
-    // In a real app, this would fetch from an API
-    // For now, we'll simulate it
-    const fetchUser = async () => {
-      try {
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/user/me');
-        // const data = await response.json();
-        
-        // Mock user data for development
-        const mockUser: User = {
-          id: 'user1',
-          name: 'Priya Sharma',
-          email: 'priya.sharma@example.com',
-          role: 'parent',
-          avatar: '/images/testimonials/avatar1.jpg',
-          children: ['child1', 'child2'],
-          enrolledCourses: ['1', '2'],
-          wishlist: ['3'],
-        };
-        
-        setUser(mockUser);
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+  const user = useMemo<User | null>(() => {
+    if (!isAuthenticated) {
+      return null;
+    }
+
+    return {
+      id: userState.id ?? '',
+      name: userState.name ?? '',
+      email: userState.email ?? '',
+      role: userState.role ?? 'user',
+      avatar: undefined,
+      children: [],
+      enrolledCourses: [],
+      wishlist: [],
     };
+  }, [isAuthenticated, userState]);
 
-    fetchUser();
-  }, []);
-
-  return { user, loading };
+  return { user, loading: isFetching };
 }

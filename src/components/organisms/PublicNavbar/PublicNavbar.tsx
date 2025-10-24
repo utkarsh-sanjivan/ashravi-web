@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -8,41 +8,45 @@ import Button from '@/components/atoms/Button';
 import ThemeToggle from '@/components/atoms/ThemeToggle';
 import SearchBar from '@/components/molecules/SearchBar';
 
-import authService from '@/services/authService';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { useLogoutMutation, useProfileQuery } from '@/store/api/auth.api';
+import { selectIsAuthenticated, selectUserProfile } from '@/store/selectors/user.selectors';
 
 import './index.css';
 
-export interface PublicNavbarProps {}
-
-interface User {
-  name: string;
-  email: string;
+export interface PublicNavbarProps {
+  isAuthenticated?: boolean;
+  showSearch?: boolean;
+  transparent?: boolean;
 }
 
 export default function PublicNavbar(props: PublicNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const { showSearch = true } = props;
+  const userState = useAppSelector(selectUserProfile);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  useProfileQuery(undefined, { skip: isAuthenticated });
+  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
-  useEffect(() => {
-    // Check if user is logged in
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (error) {
-        console.error('Failed to parse user data:', error);
+  const displayUser = isAuthenticated
+    ? {
+        name: userState.name ?? '',
+        email: userState.email ?? '',
       }
-    }
-  }, []);
+    : null;
 
   const handleLogout = async () => {
-    await authService.logout();
-    setUser(null);
+    try {
+      await logout().unwrap();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setIsMenuOpen(false);
     router.push('/');
+    router.refresh();
   };
 
   const handleSearch = (query: string) => {
@@ -60,8 +64,12 @@ export default function PublicNavbar(props: PublicNavbarProps) {
     setIsMenuOpen(false);
   };
 
+  const navbarClassName = props.transparent
+    ? 'public-navbar public-navbar--transparent'
+    : 'public-navbar';
+
   return (
-    <nav className="public-navbar">
+    <nav className={navbarClassName}>
       <div className="public-navbar-container">
         {/* Logo */}
         <Link href="/" className="public-navbar-logo" onClick={closeMenu}>
@@ -98,22 +106,24 @@ export default function PublicNavbar(props: PublicNavbarProps) {
         </div>
 
         {/* Search Bar - Desktop */}
-        <div className="public-navbar-search">
-          <SearchBar placeholder="Search for parenting courses..." />
-        </div>
+        {showSearch && (
+          <div className="public-navbar-search">
+            <SearchBar placeholder="Search for parenting courses..." />
+          </div>
+        )}
 
         {/* Desktop Actions */}
         <div className="public-navbar-actions">
           <ThemeToggle />
 
-          {user ? (
+          {displayUser ? (
             <>
               <div className="public-navbar-user">
                 <span className="public-navbar-user-name">
-                  Hello, {user.name.split(' ')[0]}
+                  Hello, {displayUser.name.split(' ')[0]}
                 </span>
               </div>
-              <Button onClick={handleLogout} variant="secondary" size="sm">
+              <Button onClick={handleLogout} variant="secondary" size="sm" disabled={isLoggingOut}>
                 Logout
               </Button>
             </>
@@ -169,9 +179,11 @@ export default function PublicNavbar(props: PublicNavbarProps) {
       {isMenuOpen && (
         <div className="public-navbar-mobile-menu">
           {/* Mobile Search */}
-          <div className="public-navbar-mobile-search">
-            <SearchBar placeholder="Search for parenting courses..." />
-          </div>
+          {showSearch && (
+            <div className="public-navbar-mobile-search">
+              <SearchBar placeholder="Search for parenting courses..." />
+            </div>
+          )}
 
           <div className="public-navbar-mobile-links">
             <Link
@@ -198,14 +210,14 @@ export default function PublicNavbar(props: PublicNavbarProps) {
           </div>
 
           <div className="public-navbar-mobile-actions">
-            {user ? (
+            {displayUser ? (
               <>
                 <div className="public-navbar-mobile-user">
                   <span className="public-navbar-mobile-user-name">
-                    Hello, {user.name}
+                    Hello, {displayUser.name}
                   </span>
                   <span className="public-navbar-mobile-user-email">
-                    {user.email}
+                    {displayUser.email}
                   </span>
                 </div>
                 <Button onClick={handleLogout} variant="secondary" className="public-navbar-mobile-button">

@@ -1,38 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import authService from '@/services/authService';
+import { useMemo } from 'react';
+import { useProfileQuery } from '@/store/api/auth.api';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { selectIsAuthenticated } from '@/store/selectors/user.selectors';
 import LandingPage from '@/components/pages/LandingPage';
 import Homepage from '@/components/pages/Homepage';
 
 export default function RootPageWrapper({ serverAuthenticated }: { serverAuthenticated: boolean }) {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(serverAuthenticated);
-  const [isLoading, setIsLoading] = useState(true);
+  const clientAuthenticated = useAppSelector(selectIsAuthenticated);
+  const { isLoading: profileLoading } = useProfileQuery(undefined, {
+    skip: serverAuthenticated || clientAuthenticated,
+  });
 
-  useEffect(() => {
-    // Check client-side authentication
-    const clientAuth = authService.isAuthenticated();
-    
-    console.log('🔍 Client-side auth check:', {
-      serverAuthenticated,
-      clientAuth,
-      hasToken: !!localStorage.getItem('accessToken'),
-      cookies: document.cookie
-    });
+  const isAuthenticated = useMemo(
+    () => Boolean(serverAuthenticated || clientAuthenticated),
+    [serverAuthenticated, clientAuthenticated]
+  );
 
-    // If client says authenticated but server doesn't, refresh the page
-    if (clientAuth && !serverAuthenticated) {
-      console.log('🔄 Client authenticated but server not - refreshing...');
-      router.refresh();
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(serverAuthenticated);
-    }
-    
-    setIsLoading(false);
-  }, [serverAuthenticated, router]);
+  const isLoading = profileLoading && !isAuthenticated;
 
   if (isLoading) {
     return (

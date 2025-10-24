@@ -1,43 +1,88 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Providers from './providers';
+import { env } from '@/config/env';
+import {
+  consumeServerPreloadedState,
+  getMiddlewarePreloadedState,
+  initializeServerStore,
+  mergeHydrationStates,
+  serializeHydratableState,
+} from '@/lib/redux-ssr';
+import { selectMetadataSnapshot } from '@/store/selectors/metadata.selectors';
 import '@/styles/globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-geist-sans' });
 
-export const metadata: Metadata = {
-  title: 'Ashravi - Empowering Parents to Build Positive Child Behaviors',
-  description: 'Evidence-based parenting strategies and courses designed by child behavior experts. Join thousands of parents building stronger relationships with their children.',
-  keywords: 'parenting courses, child behavior, positive parenting, parent training, family behavior management',
-  openGraph: {
-    title: 'Ashravi - Parenting Platform for Child Behavior',
-    description: 'Evidence-based parenting strategies and courses for parents',
-    url: 'https://ashravi.com',
-    siteName: 'Ashravi',
-    images: [
-      {
-        url: 'https://ashravi.com/og-image.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Ashravi Parenting Platform',
-      },
-    ],
-    locale: 'en_US',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Ashravi - Parenting Platform',
-    description: 'Evidence-based parenting strategies for building positive child behaviors',
-    images: ['https://ashravi.com/og-image.jpg'],
-  },
-};
+const SITE_NAME = 'Ashravi';
+const DEFAULT_TITLE = 'Ashravi - Empowering Parents to Build Positive Child Behaviors';
 
-export default function RootLayout({
+export async function generateMetadata(): Promise<Metadata> {
+  const middlewareState = await getMiddlewarePreloadedState();
+  const store = initializeServerStore(middlewareState);
+  const snapshot = selectMetadataSnapshot(store.getState());
+  let metadataBase: URL | undefined;
+  try {
+    metadataBase = new URL(env.NEXT_PUBLIC_SITE_URL);
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[metadata] Invalid NEXT_PUBLIC_SITE_URL provided. Falling back to default metadata base.', error);
+    }
+  }
+  const title = snapshot.variant === 'member' ? `${snapshot.headline} | ${SITE_NAME}` : DEFAULT_TITLE;
+  const imageParams = new URLSearchParams({
+    headline: snapshot.headline,
+    subheading: snapshot.cta,
+    variant: snapshot.variant,
+  });
+  const imagePath = `/opengraph-image?${imageParams.toString()}`;
+
+  const metadata: Metadata = {
+    title,
+    description: snapshot.description,
+    keywords: snapshot.keywords,
+    openGraph: {
+      title,
+      description: snapshot.description,
+      url: metadataBase?.toString() ?? env.NEXT_PUBLIC_SITE_URL,
+      siteName: SITE_NAME,
+      images: [
+        {
+          url: imagePath,
+          width: 1200,
+          height: 630,
+          alt: snapshot.headline,
+        },
+      ],
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: snapshot.description,
+      images: [imagePath],
+    },
+  };
+
+  if (metadataBase) {
+    metadata.metadataBase = metadataBase;
+  }
+
+  return metadata;
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerState = await getMiddlewarePreloadedState();
+  const resolvedChildren = await Promise.resolve(children);
+  const stagedState = await consumeServerPreloadedState();
+  const merged = mergeHydrationStates(headerState, stagedState);
+  const preloadedState = serializeHydratableState(merged);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -64,7 +109,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.variable}>
-        <Providers>{children}</Providers>
+        <Providers preloadedState={preloadedState}>{resolvedChildren}</Providers>
       </body>
     </html>
   );

@@ -3,19 +3,41 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/atoms/Button';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import './index.css';
 
 export default function WelcomePage() {
+  const { isAuthenticated, isChecking } = useAuthGuard({ redirectTo: '/auth/login' });
   const router = useRouter();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
     // Auto-redirect after 5 seconds
     const timer = setTimeout(() => {
       router.push('/');
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [isAuthenticated, router]);
+
+  if (isChecking) {
+    return (
+      <div className="welcome-page">
+        <div className="welcome-container">
+          <div className="welcome-card" role="status" aria-live="polite">
+            Preparing your welcome experience…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="welcome-page">

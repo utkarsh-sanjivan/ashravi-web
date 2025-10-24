@@ -1,4 +1,5 @@
-import { cookies } from 'next/headers';
+import { env } from '@/config/env';
+import { clearAuthCookies, getAccessTokenFromCookies } from './auth-cookies';
 
 export interface User {
   id: string;
@@ -12,20 +13,17 @@ export interface User {
  * This function runs on the server and uses cookies to authenticate
  */
 export async function getUser(): Promise<User | null> {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get('accessToken');
-  
+  const accessToken = await getAccessTokenFromCookies();
+
   if (!accessToken) {
     return null;
   }
 
   try {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
-    
     // Call API to get user profile
-    const response = await fetch(`${apiBase}/auth/profile`, {
+    const response = await fetch(`${env.NEXT_PUBLIC_API_BASE}/auth/profile`, {
       headers: {
-        'Authorization': `Bearer ${accessToken.value}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       cache: 'no-store', // Don't cache auth requests
@@ -40,10 +38,9 @@ export async function getUser(): Promise<User | null> {
         role: data.data.role,
       };
     }
-    
-    // If token is invalid, clear the cookie
+    // If token is invalid, clear the cookies
     if (response.status === 401) {
-      cookieStore.delete('accessToken');
+      await clearAuthCookies();
     }
     
     return null;
@@ -67,18 +64,15 @@ export async function isAuthenticated(): Promise<boolean> {
  */
 export async function getUserById(userId: string): Promise<User | null> {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('accessToken');
-    
+    const accessToken = await getAccessTokenFromCookies();
+
     if (!accessToken) {
       return null;
     }
 
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
-
-    const response = await fetch(`${apiBase}/users/${userId}`, {
+    const response = await fetch(`${env.NEXT_PUBLIC_API_BASE}/users/${userId}`, {
       headers: {
-        'Authorization': `Bearer ${accessToken.value}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       cache: 'no-store',
@@ -106,8 +100,7 @@ export async function getUserById(userId: string): Promise<User | null> {
  * Clears the authentication cookie
  */
 export async function clearAuthCookie(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete('accessToken');
+  await clearAuthCookies();
 }
 
 /**
@@ -129,7 +122,5 @@ export async function isAdmin(): Promise<boolean> {
  * Get access token from cookies (server-side only)
  */
 export async function getAccessToken(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get('accessToken');
-  return accessToken?.value || null;
+  return getAccessTokenFromCookies();
 }

@@ -1,38 +1,34 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
-import authService from '@/services/authService';
+import { useCallback } from 'react';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { useLogoutMutation } from '@/store/api/auth.api';
+import { selectIsAuthenticated, selectUserProfile } from '@/store/selectors/user.selectors';
 
 export function useAuth() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [logoutMutation, { isLoading }] = useLogoutMutation();
+  const userState = useAppSelector(selectUserProfile);
+  const isUserAuthenticated = useAppSelector(selectIsAuthenticated);
 
   const logout = useCallback(async () => {
-    setIsLoading(true);
     try {
-      await authService.logout();
-      
-      // Clear cookie
-      document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      
-      // Redirect to login
+      await logoutMutation().unwrap();
       router.push('/auth/login');
       router.refresh();
     } catch (error) {
       console.error('Logout error:', error);
-    } finally {
-      setIsLoading(false);
     }
-  }, [router]);
+  }, [logoutMutation, router]);
 
   const isAuthenticated = useCallback(() => {
-    return authService.isAuthenticated();
-  }, []);
+    return isUserAuthenticated;
+  }, [isUserAuthenticated]);
 
   const getUser = useCallback(() => {
-    return authService.getStoredUser();
-  }, []);
+    return isUserAuthenticated ? userState : null;
+  }, [isUserAuthenticated, userState]);
 
   return {
     logout,

@@ -8,7 +8,8 @@ import Button from '@/components/atoms/Button';
 import Checkbox from '@/components/atoms/Checkbox';
 import SocialLoginButton from '@/components/molecules/SocialLoginButton';
 import PasswordValidation from '@/components/molecules/PasswordValidation';
-import authService from '@/services/authService';
+import { useAppSelector } from '@/hooks/useAppSelector';
+import { useRegisterMutation } from '@/store/api/auth.api';
 import { 
   MailIcon, 
   PhoneIcon, 
@@ -22,6 +23,8 @@ export default function SignupPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [registerUser] = useRegisterMutation();
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
 
   // Step 1 - Basic Information
   const [fullName, setFullName] = useState('');
@@ -65,12 +68,11 @@ export default function SignupPage() {
   const validateEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
 
   useEffect(() => {
-    // Check if user is already logged in
-    if (authService.isAuthenticated()) {
+    if (isAuthenticated) {
       router.push('/');
       router.refresh();
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   // Step 1 submit handler
   const handleStep1Submit = (e: React.FormEvent) => {
@@ -153,59 +155,22 @@ export default function SignupPage() {
         city: city
       });
 
-      const response = await authService.register({
+      await registerUser({
         name: fullName,
         email: email,
         phoneNumber: `${countryCode}${phoneNumber}`,
         password: password,
         occupation: occupation,
         city: city
-      });
+      }).unwrap();
 
-      console.log('📥 Full registration response:', response);
-
-      // Check different possible response structures
-      if (response) {
-        // Case 1: Response has success property
-        if (response.success === true) {
-          console.log('✅ Registration successful (success: true)');
-          router.push('/auth/login?registered=true');
-          return;
-        }
-        
-        // Case 2: Response has data with accessToken
-        if (response.data && response.data.accessToken) {
-          console.log('✅ Registration successful (has accessToken)');
-          router.push('/auth/login?registered=true');
-          return;
-        }
-        
-        // Case 3: Response has accessToken directly
-        if ((response as any).accessToken) {
-          console.log('✅ Registration successful (direct accessToken)');
-          router.push('/auth/login?registered=true');
-          return;
-        }
-
-        // Case 4: HTTP 200/201 response without explicit success field
-        if (!response.success && !response.data) {
-          console.log('✅ Registration successful (assuming success from response)');
-          router.push('/auth/login?registered=true');
-          return;
-        }
-
-        // If we get here, show the actual response structure error
-        console.error('❌ Unexpected response structure:', JSON.stringify(response, null, 2));
-        setOccupationError(response.message || 'Registration completed but response structure is unexpected. Please try logging in.');
-      } else {
-        console.error('❌ No response received');
-        setOccupationError('No response from server. Please try again.');
-      }
+      router.push('/auth/login?registered=true');
     } catch (error: any) {
       console.error('❌ Registration error:', error);
-      
+
       // Handle specific error messages
-      const errorMessage = error.message || 'Registration failed. Please try again.';
+      const errorMessage =
+        error?.data?.message || error?.data?.error || error?.message || 'Registration failed. Please try again.';
       
       // Show error based on field
       if (errorMessage.toLowerCase().includes('email')) {
