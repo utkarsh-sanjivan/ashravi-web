@@ -54,26 +54,74 @@ interface APICourse {
 /**
  * Transform backend course data to frontend Course type
  */
+const safeString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+
+const resolveInstructor = (
+  input: APICourse['instructor']
+): Course['instructor'] => {
+  if (!input) {
+    return {
+      name: 'Unknown Instructor',
+      credentials: undefined,
+      avatar: undefined,
+    };
+  }
+
+  if (typeof input === 'string') {
+    return {
+      name: 'Unknown Instructor',
+      credentials: undefined,
+      avatar: undefined,
+    };
+  }
+
+  const candidate = input as Record<string, unknown>;
+
+  const joinNames = (...parts: Array<unknown>): string | undefined => {
+    const filtered = parts
+      .map((part) => safeString(part))
+      .filter((part): part is string => typeof part === 'string' && part.length > 0);
+    if (filtered.length === 0) {
+      return undefined;
+    }
+    return filtered.join(' ');
+  };
+
+  const resolvedName =
+    safeString(candidate.name) ||
+    safeString(candidate.fullName) ||
+    safeString(candidate.displayName) ||
+    joinNames(candidate.firstName, candidate.lastName) ||
+    safeString((candidate.user as { name?: string } | undefined)?.name) ||
+    safeString((candidate.profile as { name?: string } | undefined)?.name);
+
+  const resolvedAvatar =
+    safeString(candidate.avatar) ||
+    safeString(candidate.profileImage) ||
+    safeString(candidate.photo) ||
+    safeString((candidate.user as { avatar?: string } | undefined)?.avatar);
+
+  const resolvedCredentials =
+    safeString(candidate.credentials) ||
+    safeString(candidate.title) ||
+    safeString(candidate.role);
+
+  const resolvedBio =
+    safeString(candidate.bio) ||
+    safeString(candidate.about) ||
+    safeString(candidate.description);
+
+  return {
+    name: resolvedName && resolvedName.trim().length > 0 ? resolvedName : 'Unknown Instructor',
+    credentials: resolvedCredentials ?? undefined,
+    avatar: resolvedAvatar ?? undefined,
+    bio: resolvedBio ?? undefined,
+  };
+};
+
 export function transformCourse(backendCourse: APICourse): Course {
-  // Handle instructor - could be ObjectId string or populated object
-  const instructor = typeof backendCourse.instructor === 'string'
-    ? {
-        name: 'Unknown Instructor',
-        credentials: undefined,
-        avatar: undefined,
-      }
-    : backendCourse.instructor
-    ? {
-        name: backendCourse.instructor.name || 'Unknown Instructor',
-        credentials: undefined,
-        avatar: backendCourse.instructor.avatar,
-        bio: backendCourse.instructor.bio,
-      }
-    : {
-        name: 'Unknown Instructor',
-        credentials: undefined,
-        avatar: undefined,
-      };
+  const instructor = resolveInstructor(backendCourse.instructor);
 
   // Extract price and rating values
   const priceAmount = backendCourse.price?.amount ?? 0;

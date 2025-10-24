@@ -17,6 +17,7 @@ if (!globalScope.__RATE_LIMIT_MAP) {
 }
 
 const PROTECTED_ROUTE_PATTERNS: RegExp[] = [
+  /^\/course(?:\/.*)?$/,
   /^\/courses(?:\/.*)?$/,
   /^\/child(?:\/.*)?$/,
   /^\/dashboard(?:\/.*)?$/,

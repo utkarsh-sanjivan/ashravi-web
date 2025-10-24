@@ -152,7 +152,7 @@ export default function CourseCard(props: CourseCardProps) {
 
   return (
     <Link
-      href={`/courses/${props.id}`}
+      href={`/course/${props.id}`}
       className="course-card"
       onMouseEnter={() => prefetchCourseDetail(props.id)}
       onFocus={() => prefetchCourseDetail(props.id)}
