@@ -24,8 +24,6 @@ import LearningCourseDetailsPanel from '@/components/organisms/LearningCourseDet
 import LearningCurriculumPanel from '@/components/organisms/LearningCurriculumPanel';
 import type { LectureItem } from '@/components/organisms/LearningShared/types';
 
-const PLAYBACK_SPEEDS: number[] = [0.75, 1, 1.25, 1.5, 2];
-const QUALITY_OPTIONS = ['Auto', '1080p', '720p'] as const;
 const PROGRESS_THRESHOLD = 0.9;
 const FALLBACK_VIDEO = 'https://storage.googleapis.com/ashravi-assets/videos/positive-parenting-preview.mp4';
 
@@ -156,9 +154,6 @@ export default function LearningPage({ courseId }: { courseId: string }) {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeLectureId, setActiveLectureId] = useState<string | undefined>(initialLecture?.id);
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const [quality, setQuality] = useState<(typeof QUALITY_OPTIONS)[number]>('Auto');
-  const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [completedLectures, setCompletedLectures] = useState<Set<string>>(new Set());
   const [markingLectureId, setMarkingLectureId] = useState<string | null>(null);
   const [notes, setNotes] = useState<NoteEntry[]>([]);
@@ -180,13 +175,6 @@ export default function LearningPage({ courseId }: { courseId: string }) {
 
     setActiveLectureId((current) => current ?? initialLecture.id);
   }, [initialLecture?.id, initialLecture, lectures, selectedLectureParam]);
-
-  useEffect(() => {
-    if (!videoRef.current) {
-      return;
-    }
-    videoRef.current.playbackRate = playbackRate;
-  }, [playbackRate]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -388,19 +376,21 @@ export default function LearningPage({ courseId }: { courseId: string }) {
       <PublicNavbar />
       <main className="learning-main">
         <div className="learning-container">
+          <nav className="learning-breadcrumbs" aria-label="Breadcrumb">
+            <Link href="/">Home</Link>
+            <span className="learning-breadcrumb-divider">/</span>
+            <Link href="/courses">Courses</Link>
+            <span className="learning-breadcrumb-divider">/</span>
+            <Link href={`/course/${courseId}`}>Course details</Link>
+            <span className="learning-breadcrumb-divider">/</span>
+            <span aria-current="page">Learning</span>
+          </nav>
+
           <LearningPlayerSection
             activeLecture={activeLecture}
             isVideoLecture={isVideoLecture}
             videoRef={videoRef}
             videoUrl={resolvedVideoUrl}
-            captionsEnabled={captionsEnabled}
-            onToggleCaptions={setCaptionsEnabled}
-            playbackRate={playbackRate}
-            onChangePlaybackRate={setPlaybackRate}
-            quality={quality}
-            onChangeQuality={(value) => setQuality(value as (typeof QUALITY_OPTIONS)[number])}
-            playbackSpeedOptions={PLAYBACK_SPEEDS}
-            qualityOptions={QUALITY_OPTIONS}
             onTimeUpdate={handleTimeUpdate}
             onMarkComplete={() => markLectureComplete(activeLecture.id)}
             markCompleteLoading={markingLectureId === activeLecture.id}

@@ -21,6 +21,18 @@
   gap: var(--spacing-2xl);
 }
 
+.learning-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.learning-breadcrumb-divider {
+  opacity: 0.6;
+}
+
 .learning-loading,
 .learning-error {
   margin: auto;
