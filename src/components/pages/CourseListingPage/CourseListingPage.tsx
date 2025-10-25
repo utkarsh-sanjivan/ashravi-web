@@ -59,7 +59,7 @@ export default function CourseListingPage({
   initialFilters,
   initialSearch,
 }: CourseListingPageProps) {
-  const { isAuthenticated, isChecking } = useAuthGuard({ redirectTo: '/auth/login' });
+  const { isAuthenticated, isChecking } = useAuthGuard({ requireAuth: false });
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -119,7 +119,7 @@ export default function CourseListingPage({
   }, [currentPage, filters, searchQuery]);
 
   const { data, isFetching, isLoading, error } = useCoursesListQuery(queryArgs, {
-    skip: !isAuthenticated,
+    skip: isChecking || !featuresReady,
   });
 
   const prefetchCoursesList = coursesApi.usePrefetch('list');
@@ -258,10 +258,6 @@ export default function CourseListingPage({
 
   if (isChecking || !featuresReady) {
     return renderGuardMessage('Checking your session…');
-  }
-
-  if (!isAuthenticated) {
-    return renderGuardMessage('Redirecting to login…');
   }
 
   return (
