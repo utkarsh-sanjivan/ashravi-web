@@ -113,6 +113,12 @@ export default function Carousel({
   const transform = slideWidth
     ? `translateX(-${Math.min(currentIndex, maxIndex) * (slideWidth + gap)}px)`
     : 'translateX(0)';
+  const trackStyle: React.CSSProperties = {
+    transform,
+    gap: `${gap}px`,
+    '--slides-per-view': slidesPerView,
+    '--carousel-gap': `${gap}px`,
+  } as React.CSSProperties;
 
   return (
     <div className="carousel-container">
@@ -140,23 +146,11 @@ export default function Carousel({
 
       {/* Carousel Track */}
       <div className="carousel-wrapper" ref={carouselRef}>
-        <div
-          className="carousel-track"
-          style={{
-            transform,
-            gap: `${gap}px`,
-          }}
-        >
+        <div className="carousel-track" style={trackStyle}>
           {children.map((child, index) => (
             <div
               key={index}
               className="carousel-slide"
-              style={{
-                width:
-                  slideWidth > 0
-                    ? `${slideWidth}px`
-                    : `calc((100% - ${(slidesPerView - 1) * gap}px) / ${slidesPerView})`,
-              }}
             >
               {child}
             </div>
