@@ -33,6 +33,8 @@ export default function LearningPlayerSection({
           ref={videoRef}
           className="learning-video"
           controls
+          playsInline
+          preload="metadata"
           onTimeUpdate={onTimeUpdate}
           poster={activeLecture?.video?.thumbnail}
         >

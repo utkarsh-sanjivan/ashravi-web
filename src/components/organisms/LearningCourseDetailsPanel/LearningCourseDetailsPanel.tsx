@@ -64,6 +64,12 @@ export default function LearningCourseDetailsPanel({
         <div>
           <span className="learning-summary-label">Progress</span>
           <span className="learning-summary-value">{Math.round(completionRatio * 100)}%</span>
+          <div className="learning-progress-bar" aria-hidden>
+            <div
+              className="learning-progress-bar-fill"
+              style={{ width: `${Math.min(100, Math.round(completionRatio * 100))}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -84,27 +90,6 @@ export default function LearningCourseDetailsPanel({
               ))}
             </ul>
           )}
-        </section>
-
-        <section className="learning-panel">
-          <h3>Q&amp;A</h3>
-          <div className="learning-qa">
-            <div>
-              <p className="learning-qa-question">How do I apply this concept with younger kids?</p>
-              <p className="learning-qa-answer">
-                Focus on modeling and short practice sessions. Try the printable routine cards in the resources section.
-              </p>
-            </div>
-            <div>
-              <p className="learning-qa-question">Any recommended follow-up reading?</p>
-              <p className="learning-qa-answer">
-                Check the bonus PDF &ldquo;Connection Scripts&rdquo; which includes suggested books by age group.
-              </p>
-            </div>
-          </div>
-          <Button variant="secondary" size="sm">
-            Ask a question
-          </Button>
         </section>
       </div>
     </section>

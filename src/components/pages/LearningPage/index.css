@@ -33,6 +33,12 @@
   opacity: 0.6;
 }
 
+.learning-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
 .learning-loading,
 .learning-error {
   margin: auto;

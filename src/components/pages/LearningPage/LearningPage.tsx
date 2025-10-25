@@ -386,6 +386,8 @@ export default function LearningPage({ courseId }: { courseId: string }) {
             <span aria-current="page">Learning</span>
           </nav>
 
+          <h1 className="learning-title">{course.title ?? 'Learning'}</h1>
+
           <LearningPlayerSection
             activeLecture={activeLecture}
             isVideoLecture={isVideoLecture}
@@ -398,14 +400,6 @@ export default function LearningPage({ courseId }: { courseId: string }) {
 
           <div className="learning-layout">
             <div className="learning-column learning-column--support">
-              <LearningNotesPanel
-                notes={currentNotes}
-                noteDraft={noteDraft}
-                onNoteDraftChange={setNoteDraft}
-                onAddNote={handleAddNote}
-                onSeekToNote={handleSeekToNote}
-              />
-
               <LearningCourseDetailsPanel
                 activeLecture={activeLecture}
                 activeSection={currentSection}
@@ -415,6 +409,14 @@ export default function LearningPage({ courseId }: { courseId: string }) {
                 onNext={nextLecture ? () => handleLectureSelect(nextLecture.id) : undefined}
                 hasPrevious={Boolean(previousLecture)}
                 hasNext={Boolean(nextLecture)}
+              />
+
+              <LearningNotesPanel
+                notes={currentNotes}
+                noteDraft={noteDraft}
+                onNoteDraftChange={setNoteDraft}
+                onAddNote={handleAddNote}
+                onSeekToNote={handleSeekToNote}
               />
             </div>
 
