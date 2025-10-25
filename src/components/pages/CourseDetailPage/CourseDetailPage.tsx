@@ -6,13 +6,8 @@ import { useRouter } from 'next/navigation';
 
 import PublicNavbar from '@/components/organisms/PublicNavbar';
 import Footer from '@/components/organisms/Footer';
-import Button from '@/components/atoms/Button';
 import SpinnerIcon from '@/components/icons/SpinnerIcon';
 import StarIcon from '@/components/icons/StarIcon';
-import CheckmarkIcon from '@/components/icons/CheckmarkIcon';
-import ClockIcon from '@/components/icons/ClockIcon';
-import UserIcon from '@/components/icons/UserIcon';
-import ChevronDownIcon from '@/components/icons/ChevronDownIcon';
 
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useFeatureModules } from '@/hooks/useFeatureModule';
@@ -23,6 +18,9 @@ import { selectMockCourses } from '@/store/selectors/mock.selectors';
 import type { Course, Section } from '@/types';
 
 import './index.css';
+import CourseHero from '@/components/organisms/CourseHero';
+import CourseOverview from '@/components/organisms/CourseOverview';
+import CourseSidebar from '@/components/organisms/CourseSidebar';
 
 export interface CourseDetailPageProps {
   courseId: string;
@@ -42,7 +40,7 @@ const formatCurrency = (amount?: number, currency = 'USD'): string => {
       currency,
       maximumFractionDigits: 2,
     }).format(amount);
-  } catch (error) {
+  } catch {
     return `$${amount.toFixed(2)}`;
   }
 };
@@ -64,11 +62,11 @@ const formatDate = (isoDate?: string): string => {
 };
 
 const formatDuration = (seconds?: number): string => {
-  if (!seconds || !Number.isFinite(seconds)) {
+  if (!seconds || !Number.isFinite(seconds) || seconds <= 0) {
     return 'Self-paced';
   }
 
-  const totalMinutes = Math.max(0, Math.round(seconds / 60));
+  const totalMinutes = Math.round(seconds / 60);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
@@ -95,66 +93,9 @@ const countSectionLessons = (section?: Section): number => {
   return videoCount + pdfCount + testCount;
 };
 
-const buildSectionEntries = (section: Section | undefined) => {
-  if (!section) {
-    return [] as Array<{
-      id?: string;
-      title: string;
-      duration?: string;
-      type: 'video' | 'quiz' | 'resource';
-      isPreview?: boolean;
-    }>;
-  }
-
-  const entries: Array<{
-    id?: string;
-    title: string;
-    duration?: string;
-    type: 'video' | 'quiz' | 'resource';
-    isPreview?: boolean;
-  }> = [];
-
-  if (Array.isArray(section.videos)) {
-    section.videos.forEach((video) => {
-      entries.push({
-        id: video?._id,
-        title: video?.title ?? 'Video lesson',
-        duration: formatDuration(video?.duration ?? 0),
-        type: 'video',
-        isPreview: Boolean(video?.isFree),
-      });
-    });
-  }
-
-  if (section.test) {
-    entries.push({
-      id: section.test._id,
-      title: section.test.title ?? 'Quiz',
-      duration: section.test.duration ? `${section.test.duration}m` : undefined,
-      type: 'quiz',
-    });
-  }
-
-  if (Array.isArray(section.pdfs)) {
-    section.pdfs.forEach((resource) => {
-      entries.push({
-        id: resource._id,
-        title: resource.filename ?? 'Resource',
-        duration: `${Math.round(resource.size / 1024)} KB`,
-        type: 'resource',
-      });
-    });
-  }
-
-  return entries;
-};
-
-const getLectureLink = (courseId: string, lectureId?: string) =>
-  lectureId ? `/learn/${courseId}?lectureId=${lectureId}` : `/learn/${courseId}`;
-
 const renderStars = (rating: number, key: string) => {
   const normalized = Math.max(0, Math.min(5, rating));
-  const stars = [];
+  const stars = [] as JSX.Element[];
   const fullStars = Math.floor(normalized);
   const hasHalfStar = normalized % 1 >= 0.5;
 
@@ -172,8 +113,8 @@ const renderStars = (rating: number, key: string) => {
 };
 
 export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
-  const router = useRouter();
   const { isAuthenticated, isChecking } = useAuthGuard({ redirectTo: '/auth/login' });
+  const router = useRouter();
 
   const requestedFeatures = useMemo<FeatureModuleKey[]>(
     () =>
@@ -184,25 +125,18 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
   );
   const featuresReady = useFeatureModules(requestedFeatures);
 
+  const cachedCourses = useAppSelector(selectMockCourses);
   const { data, isLoading, isFetching, error } = useCourseDetailQuery(courseId, {
     skip: !isAuthenticated,
   });
-  const devMockCourses = useAppSelector(selectMockCourses);
 
   const fallbackCourse = useMemo(() => {
     const normalized = courseId.trim().toLowerCase();
-    return devMockCourses.find((course: Course) => {
-      const candidates = [
-        course?.id,
-        course?._id,
-        typeof course?.slug === 'string' ? course.slug : undefined,
-      ];
-
-      return candidates.some(
-        (candidate) => candidate && candidate.trim().toLowerCase() === normalized
-      );
+    return cachedCourses.find((course: Course) => {
+      const candidates = [course?.id, course?._id, course?.slug];
+      return candidates.some((candidate) => candidate && candidate.trim().toLowerCase() === normalized);
     });
-  }, [devMockCourses, courseId]);
+  }, [cachedCourses, courseId]);
 
   const course = data?.data ?? fallbackCourse;
 
@@ -234,8 +168,8 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
             <div className="course-detail-error">
               <h1>Course not found</h1>
               <p>We couldn&apos;t load this course right now. Please try again later.</p>
-              <Link href="/courses">
-                <Button variant="primary">Browse Courses</Button>
+              <Link href="/courses" className="course-detail-error-link">
+                Return to courses
               </Link>
             </div>
           </div>
@@ -277,6 +211,10 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
       : course.price?.amount && course.price.discountedPrice
       ? course.price.amount
       : undefined;
+  const originalPriceLabel =
+    originalPrice && originalPrice > priceAmount
+      ? formatCurrency(originalPrice, course.price?.currency)
+      : null;
 
   const sections: Section[] = Array.isArray(course.sections)
     ? (course.sections as Section[])
@@ -291,6 +229,15 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
       ? course.instructor
       : null;
 
+  const ratingStars = renderStars(ratingAverage, course.id);
+  const durationLabel = formatDuration(totalDuration);
+  const lastUpdatedLabel = formatDate(course.metadata?.lastUpdated ?? course.updatedAt);
+  const learningOutcomes = Array.isArray(course.learningOutcomes)
+    ? course.learningOutcomes
+    : [];
+  const prerequisites = Array.isArray(course.prerequisites) ? course.prerequisites : [];
+  const targetAudience = Array.isArray(course.targetAudience) ? course.targetAudience : [];
+
   return (
     <div className="course-detail-page">
       <PublicNavbar />
@@ -304,244 +251,43 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
             <span aria-current="page">{course.title ?? 'Course details'}</span>
           </nav>
 
-          <section className="course-detail-hero">
-            <div className="course-detail-hero-content">
-              <div className="course-detail-badges">
-                {Array.isArray(course.badges) &&
-                  (course.badges as NonNullable<Course['badges']>)
-                    .slice(0, 3)
-                    .map((badge) => (
-                      <span key={badge} className="course-detail-badge">
-                        {badge}
-                      </span>
-                    ))}
-              </div>
-              <h1 className="course-detail-title">{course.title ?? 'Course details'}</h1>
-              {course.shortDescription && (
-                <p className="course-detail-subtitle">{course.shortDescription}</p>
-              )}
-
-              <div className="course-detail-metrics">
-                <div className="course-detail-rating">
-                  <div className="course-detail-stars">
-                    {renderStars(ratingAverage, course.id)}
-                  </div>
-                  <span className="course-detail-rating-value">
-                    {ratingAverage.toFixed(1)}
-                  </span>
-                  <span className="course-detail-rating-count">
-                    ({ratingCount.toLocaleString()} reviews)
-                  </span>
-                </div>
-                <div className="course-detail-metric">
-                  <UserIcon />
-                  <span>{enrollment.toLocaleString()} enrolled</span>
-                </div>
-                <div className="course-detail-metric">
-                  <ClockIcon />
-                  <span>{formatDuration(totalDuration)}</span>
-                </div>
-                <div className="course-detail-metric">
-                  <span className="course-detail-metric-dot" />
-                  <span>{level}</span>
-                </div>
-              </div>
-
-              <div className="course-detail-actions">
-                <Button variant="primary" size="lg" onClick={() => router.push(`/learn/${courseId}`)}>
-                  Start learning
-                </Button>
-                <Button variant="secondary" size="lg">
-                  Add to wishlist
-                </Button>
-              </div>
-            </div>
-            <div className="course-detail-hero-media">
-              <img src={thumbnail} alt={course.title ?? 'Course cover'} />
-              <div className="course-detail-price-card">
-                <span className="course-detail-price-current">{priceLabel}</span>
-                {originalPrice && originalPrice > priceAmount && (
-                  <span className="course-detail-price-original">
-                    {formatCurrency(originalPrice, course.price?.currency)}
-                  </span>
-                )}
-              </div>
-            </div>
-          </section>
+          <CourseHero
+            title={course.title ?? 'Course details'}
+            subtitle={course.shortDescription}
+            badges={Array.isArray(course.badges) ? (course.badges as string[]) : []}
+            ratingAverage={ratingAverage}
+            ratingCount={ratingCount}
+            ratingStars={ratingStars}
+            enrollmentCount={enrollment}
+            durationLabel={durationLabel}
+            levelLabel={level}
+            thumbnail={thumbnail}
+            priceLabel={priceLabel}
+            originalPriceLabel={originalPriceLabel}
+            onStartLearning={() => router.push(`/learn/${courseId}`)}
+          />
 
           <div className="course-detail-grid">
             <div className="course-detail-main-column">
-                {Array.isArray(course.learningOutcomes) && course.learningOutcomes.length > 0 && (
-                <section className="course-detail-panel">
-                  <h2>What you&apos;ll learn</h2>
-                  <ul className="course-detail-learning-list">
-                    {course.learningOutcomes.map((outcome: string) => (
-                      <li key={outcome}>
-                        <CheckmarkIcon className="course-detail-learning-icon" />
-                        <span>{outcome}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-
-              <section className="course-detail-panel">
-                <h2>About this course</h2>
-                {course.description && (
-                  <p className="course-detail-description">{course.description}</p>
-                )}
-                {Array.isArray(course.prerequisites) && course.prerequisites.length > 0 && (
-                  <div className="course-detail-stack">
-                    <h3>Prerequisites</h3>
-                    <ul className="course-detail-bullet-list">
-                      {course.prerequisites.map((item: string) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {Array.isArray(course.targetAudience) && course.targetAudience.length > 0 && (
-                  <div className="course-detail-stack">
-                    <h3>Who this course is for</h3>
-                    <ul className="course-detail-bullet-list">
-                      {course.targetAudience.map((item: string) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </section>
-
-              {sections.length > 0 && (
-                <section className="course-detail-panel">
-                  <div className="course-detail-panel-header">
-                    <h2>Course curriculum</h2>
-                    <span>
-                      {sections.length} sections • {lessonsCount} lessons
-                    </span>
-                  </div>
-                  <div className="course-detail-section-list">
-                    {sections.map((section: Section) => (
-                      <div key={section?._id ?? section?.title} className="course-detail-section-card">
-                        <div>
-                          <h3>{section?.title ?? 'Section'}</h3>
-                          {section?.description && (
-                            <p className="course-detail-section-description">
-                              {section.description}
-                            </p>
-                          )}
-                        </div>
-                        <span className="course-detail-section-meta">
-                          {countSectionLessons(section)} lessons
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+              <CourseOverview
+                learningOutcomes={learningOutcomes}
+                description={course.description}
+                prerequisites={prerequisites}
+                targetAudience={targetAudience}
+              />
             </div>
 
-            <aside className="course-detail-sidebar" aria-label="Course summary">
-              {sections.length > 0 && (
-                <div className="course-detail-curriculum-card">
-                  <div className="course-detail-curriculum-header">
-                    <h2>Course content</h2>
-                    <span>
-                      {sections.length} sections • {lessonsCount} lessons
-                    </span>
-                  </div>
-                  <div className="course-detail-accordion">
-                    {sections.map((section, index) => {
-                      const entries = buildSectionEntries(section);
-                      if (entries.length === 0) {
-                        return null;
-                      }
-
-                      return (
-                        <details key={section?._id ?? section?.title ?? index} open={index === 0}>
-                          <summary>
-                            <span>{section?.title ?? `Section ${index + 1}`}</span>
-                            <ChevronDownIcon />
-                          </summary>
-                          <ul>
-                            {entries.map((entry, entryIndex) => (
-                              <li key={entry.id ?? `${section?._id ?? index}-${entryIndex}`}>
-                                <Link href={getLectureLink(courseId, entry.id)} className="course-detail-lecture-item">
-                                  <span className="course-detail-lecture-title">{entry.title}</span>
-                                  <span className="course-detail-lecture-meta">
-                                    <span className="course-detail-lecture-type">
-                                      {entry.type === 'video' ? 'Video' : entry.type === 'quiz' ? 'Quiz' : 'Resource'}
-                                    </span>
-                                    {entry.duration && (
-                                      <span className="course-detail-lecture-duration">{entry.duration}</span>
-                                    )}
-                                    {entry.isPreview && <span className="course-detail-lecture-preview">Preview</span>}
-                                  </span>
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </details>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="course-detail-summary-card">
-                <h2>Course details</h2>
-                <ul>
-                  <li>
-                    <span className="course-detail-summary-label">Duration</span>
-                    <span className="course-detail-summary-value">
-                      {formatDuration(totalDuration)}
-                    </span>
-                  </li>
-                  <li>
-                    <span className="course-detail-summary-label">Last updated</span>
-                    <span className="course-detail-summary-value">
-                      {formatDate(course.metadata?.lastUpdated ?? course.updatedAt)}
-                    </span>
-                  </li>
-                  <li>
-                    <span className="course-detail-summary-label">Language</span>
-                    <span className="course-detail-summary-value">{language}</span>
-                  </li>
-                  <li>
-                    <span className="course-detail-summary-label">Level</span>
-                    <span className="course-detail-summary-value">{level}</span>
-                  </li>
-                </ul>
-              </div>
-
-              {instructor && (
-                <div className="course-detail-summary-card">
-                  <h2>Your instructor</h2>
-                  <div className="course-detail-instructor-info">
-                    {instructor.avatar && (
-                      <img
-                        src={instructor.avatar}
-                        alt={instructor.name ?? 'Instructor'}
-                        className="course-detail-instructor-avatar"
-                      />
-                    )}
-                    <div>
-                      <p className="course-detail-instructor-name">
-                        {instructor.name ?? 'Instructor'}
-                      </p>
-                      {instructor.credentials && (
-                        <p className="course-detail-instructor-credentials">
-                          {instructor.credentials}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {instructor.bio && (
-                    <p className="course-detail-instructor-bio">{instructor.bio}</p>
-                  )}
-                </div>
-              )}
-            </aside>
+            <CourseSidebar
+              courseId={courseId}
+              sections={sections}
+              totalSections={sections.length}
+              lessonCount={lessonsCount}
+              durationLabel={durationLabel}
+              lastUpdatedLabel={lastUpdatedLabel}
+              languageLabel={language}
+              levelLabel={level}
+              instructor={instructor}
+            />
           </div>
         </div>
       </main>
