@@ -93,8 +93,23 @@ export default function CourseCard(props: CourseCardProps) {
     });
   };
 
-  const formatPrice = (price: number): string => {
-    return price === 0 ? 'Free' : `$${price.toFixed(2)}`;
+  const resolveCurrencySymbol = (currency?: string): string => {
+    const normalized = currency?.toUpperCase();
+    if (normalized === 'INR') {
+      return '₹';
+    }
+    if (normalized === 'USD') {
+      return '$';
+    }
+    return normalized ? `${normalized} ` : '$';
+  };
+
+  const formatPrice = (amount: number, currency?: string): string => {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return 'Free';
+    }
+    const symbol = resolveCurrencySymbol(currency);
+    return `${symbol}${amount.toFixed(2)}`;
   };
 
   const renderStars = (rating: number) => {
@@ -132,6 +147,8 @@ export default function CourseCard(props: CourseCardProps) {
     ? Number(props.rating.count) || 0
     : Number(props.reviewCount) || 0;
 
+  const priceCurrency = typeof props.price === 'object' ? props.price.currency : undefined;
+
   const price = typeof props.price === 'object'
     ? Number(props.price.discountedPrice ?? props.price.amount) || 0
     : Number(props.price) || 0;
@@ -146,9 +163,16 @@ export default function CourseCard(props: CourseCardProps) {
   const enrollmentCount = Number(props.enrollmentCount) || 0;
   const badges = props.badges ?? [];
 
-  const discountPercentage = originalPrice && originalPrice > price
+  const hasDiscount = originalPrice !== undefined && originalPrice > price;
+  const discountPercentage = hasDiscount && originalPrice !== undefined
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
+
+  const priceLabel = formatPrice(price, priceCurrency);
+  const originalPriceLabel = hasDiscount && originalPrice
+    ? formatPrice(originalPrice, priceCurrency)
+    : null;
+  const showDiscountInfo = hasDiscount && price > 0 && discountPercentage > 0;
 
   return (
     <Link
@@ -219,11 +243,13 @@ export default function CourseCard(props: CourseCardProps) {
 
         <div className="course-card-footer">
           <div className="course-card-pricing">
-            <span className="course-card-price">{formatPrice(price)}</span>
-            {originalPrice && originalPrice > price && (
+            <span className="course-card-price">{priceLabel}</span>
+            {originalPriceLabel && priceLabel !== 'Free' && (
               <>
-                <span className="course-card-original-price">${originalPrice.toFixed(2)}</span>
-                <span className="course-card-discount">{discountPercentage}% off</span>
+                <span className="course-card-original-price">{originalPriceLabel}</span>
+                {showDiscountInfo && (
+                  <span className="course-card-discount">-{discountPercentage}%</span>
+                )}
               </>
             )}
           </div>

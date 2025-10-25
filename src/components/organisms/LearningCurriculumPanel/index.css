@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  height: 100%;
 }
 
 .learning-sidebar-header {
@@ -55,7 +56,8 @@
 }
 
 .learning-curriculum {
-  max-height: 380px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
   display: flex;

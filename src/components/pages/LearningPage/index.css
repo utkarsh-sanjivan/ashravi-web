@@ -37,6 +37,7 @@
   font-size: var(--font-size-3xl);
   font-weight: 700;
   color: var(--color-text);
+  margin-bottom: var(--spacing-md);
 }
 
 .learning-loading,
@@ -77,33 +78,42 @@
   opacity: 0.9;
 }
 
+
 .learning-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  grid-template-rows: auto 1fr;
   gap: var(--spacing-xl);
+  align-items: stretch;
 }
 
-.learning-column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
+.learning-course-details {
+  grid-column: 1;
+  grid-row: 1;
 }
 
-.learning-column--support {
-  max-width: 540px;
+.learning-notes {
+  grid-column: 1;
+  grid-row: 2;
 }
 
-.learning-column--primary {
-  gap: var(--spacing-xl);
+.learning-curriculum-card {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  height: 100%;
 }
 
-@media (max-width: 1200px) {
-  .learning-column--support {
-    max-width: none;
-  }
-
+@media (max-width: 1024px) {
   .learning-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .learning-course-details,
+  .learning-curriculum-card,
+  .learning-notes {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
 

@@ -26,5 +26,5 @@
 .learning-player-actions {
   display: flex;
   justify-content: flex-start;
-  padding: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-lg);
 }

@@ -1,4 +1,5 @@
 import Button from '@/components/atoms/Button';
+import ProgressBar from '@/components/atoms/ProgressBar';
 
 import type { LectureItem } from '@/components/organisms/LearningShared/types';
 import type { PDFMetadata, Section } from '@/types';
@@ -64,12 +65,7 @@ export default function LearningCourseDetailsPanel({
         <div>
           <span className="learning-summary-label">Progress</span>
           <span className="learning-summary-value">{Math.round(completionRatio * 100)}%</span>
-          <div className="learning-progress-bar" aria-hidden>
-            <div
-              className="learning-progress-bar-fill"
-              style={{ width: `${Math.min(100, Math.round(completionRatio * 100))}%` }}
-            />
-          </div>
+          <ProgressBar value={completionRatio} ariaLabel="Course progress" />
         </div>
       </div>
 
