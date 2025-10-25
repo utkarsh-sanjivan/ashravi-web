@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import { ChevronDownIcon } from '@/components/icons';
 import './index.css';
 
@@ -30,6 +30,7 @@ export default function Carousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [slidesPerView, setSlidesPerView] = useState(slidesToShow.desktop || 3);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [slideWidth, setSlideWidth] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
 
   // Calculate total slides considering slides per view
@@ -53,6 +54,28 @@ export default function Carousel({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [slidesToShow]);
+
+  const updateSlideWidth = useCallback(() => {
+    if (!carouselRef.current) {
+      return;
+    }
+    const containerWidth = carouselRef.current.offsetWidth;
+    if (containerWidth <= 0) {
+      return;
+    }
+    const totalGap = gap * (slidesPerView - 1);
+    const width = (containerWidth - totalGap) / slidesPerView;
+    setSlideWidth(width > 0 ? width : 0);
+  }, [gap, slidesPerView]);
+
+  useLayoutEffect(() => {
+    updateSlideWidth();
+  }, [updateSlideWidth, children.length]);
+
+  useEffect(() => {
+    window.addEventListener('resize', updateSlideWidth);
+    return () => window.removeEventListener('resize', updateSlideWidth);
+  }, [updateSlideWidth]);
 
   // Auto play functionality
   useEffect(() => {
@@ -87,16 +110,9 @@ export default function Carousel({
   };
 
   // Calculate slide width including gap
-  const getSlideWidth = () => {
-    if (!carouselRef.current) return 0;
-    const containerWidth = carouselRef.current.offsetWidth;
-    const totalGap = gap * (slidesPerView - 1);
-    return (containerWidth - totalGap) / slidesPerView;
-  };
-
-  // Calculate transform
-  const slideWidth = getSlideWidth();
-  const transform = `translateX(-${currentIndex * (slideWidth + gap)}px)`;
+  const transform = slideWidth
+    ? `translateX(-${Math.min(currentIndex, maxIndex) * (slideWidth + gap)}px)`
+    : 'translateX(0)';
 
   return (
     <div className="carousel-container">
@@ -136,7 +152,10 @@ export default function Carousel({
               key={index}
               className="carousel-slide"
               style={{
-                width: `${slideWidth}px`,
+                width:
+                  slideWidth > 0
+                    ? `${slideWidth}px`
+                    : `calc((100% - ${(slidesPerView - 1) * gap}px) / ${slidesPerView})`,
               }}
             >
               {child}
