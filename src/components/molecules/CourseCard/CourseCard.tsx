@@ -93,23 +93,26 @@ export default function CourseCard(props: CourseCardProps) {
     });
   };
 
-  const resolveCurrencySymbol = (currency?: string): string => {
-    const normalized = currency?.toUpperCase();
-    if (normalized === 'INR') {
-      return '₹';
-    }
-    if (normalized === 'USD') {
-      return '$';
-    }
-    return normalized ? `${normalized} ` : '$';
-  };
-
   const formatPrice = (amount: number, currency?: string): string => {
     if (!Number.isFinite(amount) || amount <= 0) {
       return 'Free';
     }
-    const symbol = resolveCurrencySymbol(currency);
-    return `${symbol}${amount.toFixed(2)}`;
+
+    const normalized = currency?.toUpperCase();
+    const locale = normalized === 'INR' ? 'en-IN' : 'en-US';
+    const resolvedCurrency = normalized ?? 'USD';
+
+    try {
+      const formatter = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: resolvedCurrency,
+        maximumFractionDigits: 2,
+      });
+      return formatter.format(amount);
+    } catch (error) {
+      const symbol = normalized === 'INR' ? '₹' : '$';
+      return `${symbol}${amount.toFixed(2)}`;
+    }
   };
 
   const renderStars = (rating: number) => {

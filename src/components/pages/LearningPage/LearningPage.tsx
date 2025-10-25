@@ -399,36 +399,40 @@ export default function LearningPage({ courseId }: { courseId: string }) {
           />
 
           <div className="learning-layout">
-            <LearningCourseDetailsPanel
-              activeLecture={activeLecture}
-              activeSection={currentSection}
-              completionRatio={completionRatio}
-              resources={resources}
-              onPrevious={previousLecture ? () => handleLectureSelect(previousLecture.id) : undefined}
-              onNext={nextLecture ? () => handleLectureSelect(nextLecture.id) : undefined}
-              hasPrevious={Boolean(previousLecture)}
-              hasNext={Boolean(nextLecture)}
-            />
+            <div className="learning-support-column">
+              <LearningCourseDetailsPanel
+                activeLecture={activeLecture}
+                activeSection={currentSection}
+                completionRatio={completionRatio}
+                resources={resources}
+                onPrevious={previousLecture ? () => handleLectureSelect(previousLecture.id) : undefined}
+                onNext={nextLecture ? () => handleLectureSelect(nextLecture.id) : undefined}
+                hasPrevious={Boolean(previousLecture)}
+                hasNext={Boolean(nextLecture)}
+              />
 
-            <LearningCurriculumPanel
-              courseTitle={course.title ?? 'Course curriculum'}
-              completionRatio={completionRatio}
-              sections={Array.isArray(course.sections) ? (course.sections as Section[]) : []}
-              lectures={filteredLectures}
-              activeLectureId={activeLecture.id}
-              completedLectureIds={completedLectures}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onLectureSelect={handleLectureSelect}
-            />
+              <LearningNotesPanel
+                notes={currentNotes}
+                noteDraft={noteDraft}
+                onNoteDraftChange={setNoteDraft}
+                onAddNote={handleAddNote}
+                onSeekToNote={handleSeekToNote}
+              />
+            </div>
 
-            <LearningNotesPanel
-              notes={currentNotes}
-              noteDraft={noteDraft}
-              onNoteDraftChange={setNoteDraft}
-              onAddNote={handleAddNote}
-              onSeekToNote={handleSeekToNote}
-            />
+            <div className="learning-curriculum-column">
+              <LearningCurriculumPanel
+                courseTitle={course.title ?? 'Course curriculum'}
+                completionRatio={completionRatio}
+                sections={Array.isArray(course.sections) ? (course.sections as Section[]) : []}
+                lectures={filteredLectures}
+                activeLectureId={activeLecture.id}
+                completedLectureIds={completedLectures}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onLectureSelect={handleLectureSelect}
+              />
+            </div>
           </div>
         </div>
       </main>
