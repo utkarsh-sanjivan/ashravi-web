@@ -209,3 +209,13 @@
     height: 18px;
   }
 }
+
+@media (max-width: 1024px) {
+  .search-bar-input {
+    padding: 0.65rem 1rem;
+  }
+
+  .search-bar-button {
+    padding: 0.65rem 1rem;
+  }
+}

@@ -15,7 +15,7 @@ export function useAuth() {
   const logout = useCallback(async () => {
     try {
       await logoutMutation().unwrap();
-      router.push('/auth/login');
+      router.push('/');
       router.refresh();
     } catch (error) {
       console.error('Logout error:', error);

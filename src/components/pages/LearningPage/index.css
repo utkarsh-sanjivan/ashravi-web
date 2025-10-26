@@ -1,0 +1,133 @@
+.learning-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+.learning-main {
+  flex: 1;
+  padding-top: calc(var(--navbar-height, 4rem));
+  display: flex;
+}
+
+.learning-container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xl);
+}
+
+.learning-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.learning-breadcrumb-divider {
+  opacity: 0.6;
+}
+
+.learning-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-md);
+}
+
+.learning-loading,
+.learning-error {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2xl);
+  text-align: center;
+  max-width: 480px;
+}
+
+.learning-error h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+}
+
+.learning-error p {
+  color: var(--color-text-secondary);
+}
+
+.learning-error-button {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: none;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.learning-error-button:hover {
+  opacity: 0.9;
+}
+
+
+.learning-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--spacing-xl);
+  align-items: stretch;
+}
+
+.learning-support-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  min-height: 0;
+}
+
+.learning-curriculum-column,
+.learning-curriculum-column .learning-curriculum-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .learning-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .learning-curriculum-column,
+  .learning-support-column {
+    width: 100%;
+  }
+
+  .learning-curriculum-column {
+    order: 2;
+  }
+
+  .learning-support-column {
+    order: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .learning-container {
+    padding: var(--spacing-lg) var(--spacing-md) var(--spacing-2xl);
+  }
+}
+
+@media (max-width: 640px) {
+  .learning-container {
+    gap: var(--spacing-xl);
+  }
+}

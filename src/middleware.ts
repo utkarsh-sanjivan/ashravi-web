@@ -16,8 +16,9 @@ if (!globalScope.__RATE_LIMIT_MAP) {
   globalScope.__RATE_LIMIT_MAP = rateLimitStore;
 }
 
-const PROTECTED_ROUTE_PATTERNS: RegExp[] = [
-  /^\/courses(?:\/.*)?$/,
+  const PROTECTED_ROUTE_PATTERNS: RegExp[] = [
+    /^\/course(?:\/.*)?$/,
+  /^\/learn(?:\/.*)?$/,
   /^\/child(?:\/.*)?$/,
   /^\/dashboard(?:\/.*)?$/,
   /^\/account(?:\/.*)?$/,

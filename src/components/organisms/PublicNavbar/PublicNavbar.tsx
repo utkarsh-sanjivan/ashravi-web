@@ -28,7 +28,7 @@ export default function PublicNavbar(props: PublicNavbarProps) {
   const { showSearch = true } = props;
   const userState = useAppSelector(selectUserProfile);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  useProfileQuery(undefined, { skip: isAuthenticated });
+  useProfileQuery(undefined, { skip: !isAuthenticated });
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const displayUser = isAuthenticated

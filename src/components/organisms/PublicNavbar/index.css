@@ -269,25 +269,26 @@
 /* Tablet */
 @media (max-width: 1024px) {
   .public-navbar-container {
-    padding: 0 var(--spacing-md);
-    height: 3.5rem;
-  }
-
-  .public-navbar-logo-image {
-    width: 2rem;
-    height: 2rem;
+    padding: var(--spacing-xs) var(--spacing-md);
+    min-height: 3.25rem;
+    height: auto;
   }
 
   .public-navbar-search {
-    max-width: 24rem;
+    max-width: 20rem;
+  }
+
+  .public-navbar-actions {
+    gap: var(--spacing-sm);
   }
 }
 
 /* Mobile */
 @media (max-width: 768px) {
   .public-navbar-container {
-    padding: 0 var(--spacing-md);
-    height: 3.5rem;
+    padding: var(--spacing-xs) var(--spacing-md);
+    min-height: 3.25rem;
+    height: auto;
   }
 
   .public-navbar-logo-image {

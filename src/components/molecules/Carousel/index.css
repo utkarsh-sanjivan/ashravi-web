@@ -19,10 +19,12 @@
   display: flex;
   transition: transform 0.3s ease-in-out;
   will-change: transform;
+  --slides-per-view: 3;
+  --carousel-gap: 24px;
 }
 
 .carousel-slide {
-  flex-shrink: 0;
+  flex: 0 0 calc((100% - (var(--slides-per-view) - 1) * var(--carousel-gap)) / var(--slides-per-view));
 }
 
 /* Navigation Arrows */
