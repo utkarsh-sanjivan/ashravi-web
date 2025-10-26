@@ -11,6 +11,8 @@ import SearchBar from '@/components/molecules/SearchBar';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useLogoutMutation, useProfileQuery } from '@/store/api/auth.api';
 import { selectIsAuthenticated, selectUserProfile } from '@/store/selectors/user.selectors';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
+import { clearUser } from '@/store/user.slice';
 
 import './index.css';
 
@@ -23,6 +25,7 @@ export interface PublicNavbarProps {
 export default function PublicNavbar(props: PublicNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { showSearch = true } = props;
@@ -41,12 +44,12 @@ export default function PublicNavbar(props: PublicNavbarProps) {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
+      dispatch(clearUser());
     } catch (error) {
       console.error('Logout error:', error);
     }
     setIsMenuOpen(false);
     router.push('/');
-    router.refresh();
   };
 
   const handleSearch = (query: string) => {

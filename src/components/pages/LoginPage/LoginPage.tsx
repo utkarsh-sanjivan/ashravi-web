@@ -8,8 +8,10 @@ import Button from '@/components/atoms/Button';
 import Checkbox from '@/components/atoms/Checkbox';
 import SocialLoginButton from '@/components/molecules/SocialLoginButton';
 import { MailIcon, PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from '@/components/icons';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useLoginMutation } from '@/store/api/auth.api';
+import { setUser } from '@/store/user.slice';
 import './index.css';
 
 type LoginMethod = 'email' | 'phone';
@@ -17,6 +19,7 @@ type LoginMethod = 'email' | 'phone';
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -99,15 +102,27 @@ export default function LoginPage() {
 
     try {
       // Call the real login API
-      await login({
+      const result = await login({
         email,
         password,
         rememberMe,
       }).unwrap();
 
+      if (result?.user) {
+        dispatch(
+          setUser({
+            id: result.user.id ?? null,
+            name: result.user.name ?? null,
+            email: result.user.email ?? null,
+            role: result.user.role ?? null,
+            createdAt: result.user.createdAt ?? null,
+            updatedAt: result.user.updatedAt ?? null,
+          })
+        );
+      }
+
       const redirectUrl = searchParams?.get?.('redirect') || '/';
       router.push(redirectUrl);
-      router.refresh();
     } catch (error: any) {
       console.error('Login error:', error);
 
