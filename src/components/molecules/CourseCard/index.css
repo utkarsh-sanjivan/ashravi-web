@@ -321,19 +321,23 @@
 }
 
 .course-card-discount {
-  padding: var(--spacing-xs) var(--spacing-sm);
+  display: inline-flex;
+  align-items: center;
+  padding: calc(var(--spacing-xs) * 0.75) var(--spacing-sm);
   background-color: #10b981;
-  color: white;
+  color: #ffffff;
   font-size: 0.6875rem;
   font-weight: 700;
   border-radius: var(--radius-sm);
   white-space: nowrap;
+  margin-left: var(--spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .course-card-pricing {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--spacing-xs);
   flex-wrap: wrap;
 }
-
