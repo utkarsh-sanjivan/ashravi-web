@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
 
 import PublicNavbar from '@/components/organisms/PublicNavbar';
 import Footer from '@/components/organisms/Footer';
@@ -123,9 +122,6 @@ interface NoteEntry {
 
 export default function LearningPage({ courseId }: { courseId: string }) {
   const { isAuthenticated, isChecking } = useAuthGuard({ redirectTo: '/auth/login' });
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedLectureParam = searchParams?.get('lectureId');
 
   const featureKeys = useMemo<FeatureModuleKey[]>(
     () => (process.env.NODE_ENV !== 'production' ? ['courses', 'wishlist', 'mock'] : ['courses', 'wishlist']),
@@ -150,7 +146,10 @@ export default function LearningPage({ courseId }: { courseId: string }) {
   const userProfile = useAppSelector(selectUserProfile);
 
   const lectures = useMemo(() => flattenCourseLectures(course), [course]);
-  const initialLecture = useMemo(() => lectures.find((lecture) => lecture.type === 'video' && !lecture.isLocked) ?? lectures[0], [lectures]);
+  const initialLecture = useMemo(
+    () => lectures.find((lecture) => lecture.type === 'video' && !lecture.isLocked) ?? lectures[0],
+    [lectures]
+  );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeLectureId, setActiveLectureId] = useState<string | undefined>(initialLecture?.id);
@@ -161,20 +160,29 @@ export default function LearningPage({ courseId }: { courseId: string }) {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const progressPostedRef = useRef<Set<string>>(new Set());
+  const initializedFromUrlRef = useRef(false);
 
   useEffect(() => {
-    if (selectedLectureParam && lectures.some((lecture) => lecture.id === selectedLectureParam)) {
-      setActiveLectureId(selectedLectureParam);
-      progressPostedRef.current.delete(selectedLectureParam);
+    if (initializedFromUrlRef.current || typeof window === 'undefined' || lectures.length === 0) {
       return;
     }
 
-    if (!initialLecture) {
-      return;
+    const url = new URL(window.location.href);
+    const candidateFromSearch = url.searchParams.get('lectureId');
+    const candidateFromHash = url.hash.startsWith('#lecture-') ? url.hash.slice('#lecture-'.length) : null;
+    const candidate = [candidateFromSearch, candidateFromHash].find(
+      (value): value is string => Boolean(value && lectures.some((lecture) => lecture.id === value))
+    );
+
+    if (candidate) {
+      setActiveLectureId(candidate);
+      progressPostedRef.current.delete(candidate);
+    } else if (!activeLectureId && initialLecture) {
+      setActiveLectureId(initialLecture.id);
     }
 
-    setActiveLectureId((current) => current ?? initialLecture.id);
-  }, [initialLecture?.id, initialLecture, lectures, selectedLectureParam]);
+    initializedFromUrlRef.current = true;
+  }, [activeLectureId, initialLecture, lectures]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -240,9 +248,12 @@ export default function LearningPage({ courseId }: { courseId: string }) {
   }, [completedLectures.size, lectures.length]);
 
   const handleLectureSelect = (lectureId: string) => {
+    if (activeLectureId === lectureId) {
+      return;
+    }
+
     setActiveLectureId(lectureId);
     progressPostedRef.current.delete(lectureId);
-    router.push(`/learn/${courseId}?lectureId=${lectureId}`);
   };
 
   const handleTimeUpdate = () => {
