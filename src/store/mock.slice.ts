@@ -13,11 +13,16 @@ const normalizedMockCourses: Course[] = transformCourses(
     thumbnail: course.thumbnail ?? '/images/course-placeholder.jpg',
     category: course.category ?? 'General',
     level: (course.level ?? 'beginner').toLowerCase(),
-    price: {
-      amount: typeof course.price === 'number' ? course.price : 0,
-      currency: 'USD',
-      discountedPrice: typeof course.price === 'number' ? course.price : 0,
-    },
+    price: (() => {
+      const originalPrice = typeof course.price === 'number' ? course.price : 0;
+      const discountedPrice =
+        originalPrice > 0 ? Math.max(Math.round(originalPrice * 0.8), 1) : 0;
+      return {
+        amount: originalPrice,
+        currency: 'USD',
+        discountedPrice: discountedPrice < originalPrice ? discountedPrice : undefined,
+      };
+    })(),
     instructor: course.instructor ?? { name: 'Unknown Instructor' },
     tags: course.tags ?? [],
     badges: course.badges ?? [],

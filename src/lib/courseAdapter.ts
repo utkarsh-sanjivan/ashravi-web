@@ -124,8 +124,9 @@ export function transformCourse(backendCourse: APICourse): Course {
   const instructor = resolveInstructor(backendCourse.instructor);
 
   // Extract price and rating values
-  const priceAmount = backendCourse.price?.amount ?? 0;
+  const listPrice = backendCourse.price?.amount ?? 0;
   const discountedPrice = backendCourse.price?.discountedPrice;
+  const finalPrice = discountedPrice !== undefined ? discountedPrice : listPrice;
   const currency = backendCourse.price?.currency ?? 'USD';
   const ratingAvg = backendCourse.rating?.average ?? 0;
   const ratingCount = backendCourse.rating?.count ?? 0;
@@ -133,7 +134,7 @@ export function transformCourse(backendCourse: APICourse): Course {
   // Determine badges based on course properties
   const badges: Array<'Bestseller' | 'New' | 'Updated' | 'Free'> = [];
   
-  if (discountedPrice !== undefined ? discountedPrice === 0 : priceAmount === 0) {
+  if (discountedPrice !== undefined ? discountedPrice === 0 : listPrice === 0) {
     badges.push('Free');
   }
   
@@ -157,7 +158,7 @@ export function transformCourse(backendCourse: APICourse): Course {
   }
 
   // Calculate original price (only if discounted)
-  const originalPrice = discountedPrice !== undefined ? priceAmount : undefined;
+  const originalPrice = discountedPrice !== undefined ? listPrice : undefined;
 
   // Level - lowercase
   const level: 'beginner' | 'intermediate' | 'advanced' = 
@@ -179,9 +180,9 @@ export function transformCourse(backendCourse: APICourse): Course {
     level: level,
     language: backendCourse.language || 'English',
     price: {
-      amount: discountedPrice ?? priceAmount,
+      amount: finalPrice,
       currency: currency,
-      discountedPrice: discountedPrice,
+      discountedPrice: originalPrice,
     },
     sections: backendCourse.sections as Section[] || [],
     instructor: instructor,

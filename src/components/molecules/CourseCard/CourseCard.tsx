@@ -72,6 +72,15 @@ export default function CourseCard(props: CourseCardProps) {
     : Boolean(props.isWishlisted);
   const isPending = wishlistReady ? isPendingFromStore : false;
 
+  const parsePriceValue = (value: unknown): number | undefined => {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : undefined;
+  };
+
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -150,32 +159,44 @@ export default function CourseCard(props: CourseCardProps) {
     ? Number(props.rating.count) || 0
     : Number(props.reviewCount) || 0;
 
-  const priceCurrency = typeof props.price === 'object' ? props.price.currency : undefined;
-
-  const price = typeof props.price === 'object'
-    ? Number(props.price.discountedPrice ?? props.price.amount) || 0
-    : Number(props.price) || 0;
-
-  const originalPrice = typeof props.price === 'object' && props.price.discountedPrice
-    ? Number(props.price.amount)
-    : props.originalPrice
-    ? Number(props.originalPrice)
+  const priceData =
+    typeof props.price === 'object' && props.price !== null
+      ? {
+          amount: parsePriceValue(props.price.amount),
+          discountedPrice: parsePriceValue(props.price.discountedPrice),
+          currency: props.price.currency,
+        }
+      : null;
+  const fallbackPriceValue = !priceData
+    ? parsePriceValue(typeof props.price === 'number' ? props.price : props.originalPrice)
     : undefined;
-
+  const priceCurrency = priceData?.currency;
+  const primaryPriceValue = priceData?.amount ?? fallbackPriceValue ?? 0;
+  const strikePriceValue =
+    priceData?.discountedPrice ?? parsePriceValue(props.originalPrice);
   const duration = Number(props.duration) || 0;
   const enrollmentCount = Number(props.enrollmentCount) || 0;
   const badges = props.badges ?? [];
 
-  const hasDiscount = originalPrice !== undefined && originalPrice > price;
-  const discountPercentage = hasDiscount && originalPrice !== undefined
-    ? Math.round(((originalPrice - price) / originalPrice) * 100)
-    : 0;
-
-  const priceLabel = formatPrice(price, priceCurrency);
-  const originalPriceLabel = hasDiscount && originalPrice
-    ? formatPrice(originalPrice, priceCurrency)
+  const priceLabel = formatPrice(primaryPriceValue, priceCurrency);
+  const hasStrikePrice =
+    strikePriceValue !== undefined &&
+    strikePriceValue !== null &&
+    Number.isFinite(strikePriceValue) &&
+    strikePriceValue > 0;
+  const strikePriceLabel = hasStrikePrice
+    ? formatPrice(strikePriceValue, priceCurrency)
     : null;
-  const showDiscountInfo = hasDiscount && price > 0 && discountPercentage > 0;
+  const discountDifference =
+    hasStrikePrice && Number.isFinite(primaryPriceValue)
+      ? primaryPriceValue - strikePriceValue
+      : undefined;
+  const showDiscountAmount =
+    discountDifference !== undefined && Number.isFinite(discountDifference) && discountDifference !== 0;
+  const discountAmountLabel =
+    showDiscountAmount && discountDifference !== undefined
+      ? formatPrice(Math.abs(discountDifference), priceCurrency)
+      : null;
 
   return (
     <Link
@@ -247,11 +268,11 @@ export default function CourseCard(props: CourseCardProps) {
         <div className="course-card-footer">
           <div className="course-card-pricing">
             <span className="course-card-price">{priceLabel}</span>
-            {originalPriceLabel && priceLabel !== 'Free' && (
+            {strikePriceLabel && (
               <>
-                <span className="course-card-original-price">{originalPriceLabel}</span>
-                {showDiscountInfo && (
-                  <span className="course-card-discount">-{discountPercentage}%</span>
+                <span className="course-card-original-price">{strikePriceLabel}</span>
+                {discountAmountLabel && (
+                  <span className="course-card-discount">Save {discountAmountLabel}</span>
                 )}
               </>
             )}

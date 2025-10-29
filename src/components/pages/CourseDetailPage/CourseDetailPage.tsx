@@ -203,14 +203,12 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
   const thumbnail = course.coverImage ?? course.thumbnail ?? FALLBACK_IMAGE;
 
   const priceAmount =
-    course.price?.discountedPrice ?? course.price?.amount ?? course.originalPrice ?? 0;
+    course.price?.amount ?? course.originalPrice ?? 0;
   const priceLabel = formatCurrency(priceAmount, course.price?.currency);
   const originalPrice =
-    course.originalPrice !== undefined
-      ? course.originalPrice
-      : course.price?.amount && course.price.discountedPrice
-      ? course.price.amount
-      : undefined;
+    course.price?.discountedPrice !== undefined
+      ? course.price.discountedPrice
+      : course.originalPrice;
   const originalPriceLabel =
     originalPrice && originalPrice > priceAmount
       ? formatCurrency(originalPrice, course.price?.currency)
