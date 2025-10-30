@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import Button from '@/components/atoms/Button';
 import UserIcon from '@/components/icons/UserIcon';
 import ClockIcon from '@/components/icons/ClockIcon';
+import HeartIcon from '@/components/icons/HeartIcon';
 
 import './index.css';
 
@@ -23,6 +24,10 @@ interface CourseHeroProps {
   originalPriceLabel?: string | null;
   onStartLearning: () => void;
   onWishlistToggle?: () => void;
+  wishlistLabel?: string;
+  wishlistDisabled?: boolean;
+  wishlistLoading?: boolean;
+  isWishlisted?: boolean;
 }
 
 export default function CourseHero({
@@ -40,10 +45,17 @@ export default function CourseHero({
   originalPriceLabel,
   onStartLearning,
   onWishlistToggle,
+  wishlistLabel,
+  wishlistDisabled,
+  wishlistLoading,
+  isWishlisted = false,
 }: CourseHeroProps) {
   const formattedRating = ratingAverage.toFixed(1);
   const formattedReviews = ratingCount.toLocaleString();
   const formattedEnrollment = enrollmentCount.toLocaleString();
+  const resolvedWishlistLabel =
+    wishlistLabel ?? (isWishlisted ? 'Remove from wishlist' : 'Add to wishlist');
+  const wishlistButtonDisabled = wishlistDisabled ?? !onWishlistToggle;
 
   return (
     <section className="course-detail-hero">
@@ -86,14 +98,29 @@ export default function CourseHero({
             variant="secondary"
             size="lg"
             onClick={onWishlistToggle}
-            disabled={!onWishlistToggle}
+            disabled={wishlistButtonDisabled}
+            loading={wishlistLoading}
+            aria-pressed={isWishlisted}
+            aria-label={resolvedWishlistLabel}
           >
-            Add to wishlist
+            {resolvedWishlistLabel}
           </Button>
         </div>
       </div>
       <div className="course-detail-hero-media">
         <img src={thumbnail} alt={title} />
+        {onWishlistToggle && (
+          <button
+            type="button"
+            className="course-detail-wishlist-toggle"
+            onClick={onWishlistToggle}
+            disabled={wishlistButtonDisabled}
+            aria-label={resolvedWishlistLabel}
+            aria-pressed={isWishlisted}
+          >
+            <HeartIcon filled={isWishlisted} />
+          </button>
+        )}
         <div className="course-detail-price-card">
           <span className="course-detail-price-current">{priceLabel}</span>
           {originalPriceLabel && (

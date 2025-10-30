@@ -13,8 +13,13 @@ import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useFeatureModules } from '@/hooks/useFeatureModule';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import type { FeatureModuleKey } from '@/store/modules/registry';
-import { useCourseDetailQuery } from '@/store/api/courses.api';
+import { useCourseDetailQuery, useToggleWishlistMutation } from '@/store/api/courses.api';
 import { selectMockCourses } from '@/store/selectors/mock.selectors';
+import { selectUserProfile } from '@/store/selectors/user.selectors';
+import {
+  makeSelectIsCourseWishlisted,
+  makeSelectIsWishlistPending,
+} from '@/store/selectors/wishlist.selectors';
 import type { Course, Section } from '@/types';
 
 import './index.css';
@@ -124,11 +129,23 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
     []
   );
   const featuresReady = useFeatureModules(requestedFeatures);
+  const wishlistReady = featuresReady;
 
   const cachedCourses = useAppSelector(selectMockCourses);
+  const user = useAppSelector(selectUserProfile);
+  const makeWishlistedSelector = useMemo(makeSelectIsCourseWishlisted, []);
+  const makePendingSelector = useMemo(makeSelectIsWishlistPending, []);
+  const isWishlistedFromStore = useAppSelector((state) =>
+    makeWishlistedSelector(state, courseId)
+  );
+  const isWishlistPendingFromStore = useAppSelector((state) =>
+    makePendingSelector(state, courseId)
+  );
+
   const { data, isLoading, isFetching, error } = useCourseDetailQuery(courseId, {
     skip: !isAuthenticated,
   });
+  const [toggleWishlist, { isLoading: isWishlistMutating }] = useToggleWishlistMutation();
 
   const fallbackCourse = useMemo(() => {
     const normalized = courseId.trim().toLowerCase();
@@ -139,6 +156,27 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
   }, [cachedCourses, courseId]);
 
   const course = data?.data ?? fallbackCourse;
+
+  const isWishlisted = wishlistReady
+    ? isWishlistedFromStore
+    : Boolean(course?.isWishlisted);
+  const isWishlistPending = wishlistReady ? isWishlistPendingFromStore : false;
+  const wishlistLabel = isWishlisted ? 'Remove from wishlist' : 'Add to wishlist';
+  const wishlistDisabled =
+    !wishlistReady || !user?.id || isWishlistPending || isWishlistMutating;
+
+  const handleWishlistToggle = () => {
+    if (wishlistDisabled || !user?.id) {
+      return;
+    }
+
+    const action = isWishlisted ? 'remove' : 'add';
+    toggleWishlist({ parentId: user.id, courseId, action }).catch((toggleError) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Failed to toggle wishlist', toggleError);
+      }
+    });
+  };
 
   const isLoadingState = isChecking || !featuresReady || ((isLoading || isFetching) && !course);
 
@@ -263,6 +301,11 @@ export default function CourseDetailPage({ courseId }: CourseDetailPageProps) {
             priceLabel={priceLabel}
             originalPriceLabel={originalPriceLabel}
             onStartLearning={() => router.push(`/learn/${courseId}`)}
+            onWishlistToggle={handleWishlistToggle}
+            wishlistLabel={wishlistLabel}
+            wishlistDisabled={wishlistDisabled}
+            wishlistLoading={isWishlistPending || isWishlistMutating}
+            isWishlisted={isWishlisted}
           />
 
           <div className="course-detail-grid">
