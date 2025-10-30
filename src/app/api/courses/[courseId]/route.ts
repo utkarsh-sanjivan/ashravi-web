@@ -9,7 +9,7 @@ interface RouteParams {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<RouteParams> }
 ) {
   const { courseId } = await context.params;
@@ -20,7 +20,8 @@ export async function GET(
 
   try {
     const accessToken = await getAccessTokenFromCookies();
-    const { response, data, rawBody } = await callCoursesApi(`/courses/${courseId}`, { method: 'GET' }, accessToken);
+    const search = request.nextUrl.search ?? '';
+    const { response, data, rawBody } = await callCoursesApi(`/courses/${courseId}${search}`, { method: 'GET' }, accessToken);
 
     if (!response.ok) {
       const message = extractErrorMessage(data ?? rawBody, 'Failed to fetch course details');

@@ -10,7 +10,7 @@ import ClockIcon from '@/components/icons/ClockIcon';
 import UserIcon from '@/components/icons/UserIcon';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { useFeatureModule } from '@/hooks/useFeatureModule';
-import { selectIsAuthenticated } from '@/store/selectors/user.selectors';
+import { selectIsAuthenticated, selectUserProfile } from '@/store/selectors/user.selectors';
 import {
   makeSelectIsCourseWishlisted,
   makeSelectIsWishlistPending,
@@ -59,6 +59,7 @@ export default function CourseCard(props: CourseCardProps) {
   const makePendingSelector = useMemo(makeSelectIsWishlistPending, []);
   const wishlistReady = useFeatureModule('wishlist');
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const user = useAppSelector(selectUserProfile);
   const isWishlistedFromStore = useAppSelector((state) =>
     makeWishlistedSelector(state, props.id)
   );
@@ -95,7 +96,10 @@ export default function CourseCard(props: CourseCardProps) {
     }
 
     const action = isWishlisted ? 'remove' : 'add';
-    toggleWishlist({ courseId: props.id, action }).catch((error) => {
+    if (!user.id) {
+      return;
+    }
+    toggleWishlist({ courseId: props.id, action, parentId: user.id }).catch((error) => {
       if (process.env.NODE_ENV !== 'production') {
         console.warn('Failed to toggle wishlist', error);
       }

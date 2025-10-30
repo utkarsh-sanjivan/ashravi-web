@@ -70,12 +70,20 @@ const resolveInternalApiUrl = (path: string) => {
 export const coursesApi = apiService.injectEndpoints({
   endpoints: (builder) => ({
     list: builder.query<CourseListResponse, CourseListRequest | void>({
-      query: (params) => {
+      async queryFn(params, queryApi, _extraOptions, baseQuery) {
+        const state = queryApi.getState() as RootState;
+        const userId = state.user?.isAuthenticated ? state.user?.id : null;
         const queryString = buildQueryString(params ?? {});
-        return {
-          url: resolveInternalApiUrl(`/api/courses${queryString}`),
-          method: 'GET',
-        };
+        const parentQuery = userId ? `${queryString ? '&' : '?'}parentId=${encodeURIComponent(userId)}` : '';
+        const url = resolveInternalApiUrl(`/api/courses${queryString}${parentQuery}`);
+
+        const result = await baseQuery({ url, method: 'GET' });
+
+        if (result.error) {
+          return { error: result.error };
+        }
+
+        return { data: normalizeListResponse(result.data) };
       },
       providesTags: (result) =>
         result?.data
@@ -84,26 +92,39 @@ export const coursesApi = apiService.injectEndpoints({
               { type: 'Courses' as const, id: 'LIST' },
             ]
           : [{ type: 'Courses' as const, id: 'LIST' }],
-      transformResponse: normalizeListResponse,
     }),
     detail: builder.query<CourseDetailResponse, string>({
-      query: (courseId) => ({
-        url: resolveInternalApiUrl(`/api/courses/${courseId}`),
-        method: 'GET',
-      }),
+      async queryFn(courseId, queryApi, _extraOptions, baseQuery) {
+        const state = queryApi.getState() as RootState;
+        const userId = state.user?.isAuthenticated ? state.user?.id : null;
+        const parentQuery = userId ? `?parentId=${encodeURIComponent(userId)}` : '';
+        const url = resolveInternalApiUrl(`/api/courses/${courseId}${parentQuery}`);
+
+        const result = await baseQuery({ url, method: 'GET' });
+
+        if (result.error) {
+          return { error: result.error };
+        }
+
+        return { data: normalizeDetailResponse(result.data) };
+      },
       providesTags: (result, error, courseId) => [{ type: 'Course', id: courseId }],
-      transformResponse: normalizeDetailResponse,
     }),
-    toggleWishlist: builder.mutation<{ status: 'added' | 'removed' }, { courseId: string; action: 'add' | 'remove' }>({
-      query: ({ courseId, action }) => {
+    toggleWishlist: builder.mutation<{ status: 'added' | 'removed' }, { parentId: string; courseId: string; action: 'add' | 'remove' }>({
+      query: ({ parentId, courseId, action }) => {
         const method: 'POST' | 'DELETE' = action === 'add' ? 'POST' : 'DELETE';
+        const parentPath = `/api/parents/${parentId}/wishlist`;
+        const url =
+          method === 'POST'
+            ? resolveInternalApiUrl(parentPath)
+            : resolveInternalApiUrl(`${parentPath}/${courseId}`);
         const request: {
           url: string;
           method: 'POST' | 'DELETE';
           body?: string;
           headers?: Record<string, string>;
         } = {
-          url: resolveInternalApiUrl(`/api/courses/${courseId}/wishlist`),
+          url,
           method,
         };
 
