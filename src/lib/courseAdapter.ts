@@ -47,6 +47,11 @@ interface APICourse {
     totalTests?: number;
     lastUpdated?: string;
   };
+  isWishlisted?: boolean;
+  isWishlist?: boolean;
+  isInWishlist?: boolean;
+  wishlistStatus?: string;
+  wishlist?: boolean;
   createdAt: string;
   updatedAt?: string;
 }
@@ -118,6 +123,38 @@ const resolveInstructor = (
     avatar: resolvedAvatar ?? undefined,
     bio: resolvedBio ?? undefined,
   };
+};
+
+const resolveWishlistFlag = (course: APICourse): boolean => {
+  if (typeof course.isWishlisted === 'boolean') {
+    return course.isWishlisted;
+  }
+
+  if (typeof course.isWishlist === 'boolean') {
+    return course.isWishlist;
+  }
+
+  if (typeof course.isInWishlist === 'boolean') {
+    return course.isInWishlist;
+  }
+
+  const wishlistBoolean = (course as Record<string, unknown>).wishlist;
+  if (typeof wishlistBoolean === 'boolean') {
+    return wishlistBoolean;
+  }
+
+  const wishlistStatus = (course as Record<string, unknown>).wishlistStatus;
+  if (typeof wishlistStatus === 'string') {
+    const normalized = wishlistStatus.trim().toLowerCase();
+    if (['added', 'wishlisted', 'true', 'yes', 'saved'].includes(normalized)) {
+      return true;
+    }
+    if (['removed', 'false', 'no'].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return false;
 };
 
 export function transformCourse(backendCourse: APICourse): Course {
@@ -205,7 +242,7 @@ export function transformCourse(backendCourse: APICourse): Course {
       lastUpdated: backendCourse.metadata?.lastUpdated,
     },
     badges: badges,
-    isWishlisted: false,
+    isWishlisted: resolveWishlistFlag(backendCourse),
     duration: Math.ceil((backendCourse.metadata?.totalDuration ?? 0) / 3600),
     originalPrice: originalPrice,
     reviewCount: ratingCount,

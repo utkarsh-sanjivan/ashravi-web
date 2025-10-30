@@ -95,10 +95,27 @@ export const coursesApi = apiService.injectEndpoints({
       transformResponse: normalizeDetailResponse,
     }),
     toggleWishlist: builder.mutation<{ status: 'added' | 'removed' }, { courseId: string; action: 'add' | 'remove' }>({
-      query: ({ courseId, action }) => ({
-        url: resolveInternalApiUrl(`/api/courses/${courseId}/wishlist`),
-        method: action === 'add' ? 'POST' : 'DELETE',
-      }),
+      query: ({ courseId, action }) => {
+        const method: 'POST' | 'DELETE' = action === 'add' ? 'POST' : 'DELETE';
+        const request: {
+          url: string;
+          method: 'POST' | 'DELETE';
+          body?: string;
+          headers?: Record<string, string>;
+        } = {
+          url: resolveInternalApiUrl(`/api/courses/${courseId}/wishlist`),
+          method,
+        };
+
+        if (method === 'POST') {
+          request.body = JSON.stringify({ courseId });
+          request.headers = {
+            'Content-Type': 'application/json',
+          };
+        }
+
+        return request;
+      },
       invalidatesTags: (result, error, { courseId }) => [
         { type: 'Course' as const, id: courseId },
         { type: 'Courses' as const, id: 'LIST' },

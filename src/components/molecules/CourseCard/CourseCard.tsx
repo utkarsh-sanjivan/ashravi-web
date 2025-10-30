@@ -225,6 +225,7 @@ export default function CourseCard(props: CourseCardProps) {
           onClick={handleWishlistClick}
           className="course-card-wishlist"
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-pressed={isWishlisted}
           disabled={!wishlistReady || isPending || isMutating}
           aria-busy={!wishlistReady || isPending || isMutating}
         >
