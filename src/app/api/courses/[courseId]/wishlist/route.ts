@@ -19,13 +19,14 @@ async function forwardWishlistRequest(
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
+  const search = request.nextUrl.search ?? '';
   const body = method === 'POST' ? await request.text() : undefined;
   const contentType = request.headers.get('content-type') ?? undefined;
 
   const headers: HeadersInit | undefined = contentType ? { 'Content-Type': contentType } : undefined;
 
   const { response, data, rawBody } = await callCoursesApi(
-    `/courses/${courseId}/wishlist`,
+    `/courses/${courseId}/wishlist${search}`,
     {
       method,
       body: body && body.length > 0 ? body : undefined,

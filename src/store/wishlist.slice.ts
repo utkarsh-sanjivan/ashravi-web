@@ -63,6 +63,41 @@ const wishlistSlice = createAppSlice({
         delete state.pending[courseId];
         const resolved = resolveRejectedActionError(action, 'Unable to update wishlist');
         state.error = resolved.message;
+      })
+      .addMatcher(coursesApi.endpoints.list.matchFulfilled, (state, action) => {
+        const nextIds = new Set(state.courseIds);
+        const courses = action.payload?.data ?? [];
+
+        courses.forEach((course) => {
+          const courseId = course?.id ?? course?._id;
+          if (!courseId) {
+            return;
+          }
+
+          if (course?.isWishlisted) {
+            nextIds.add(courseId);
+          } else {
+            nextIds.delete(courseId);
+          }
+        });
+
+        state.courseIds = Array.from(nextIds);
+      })
+      .addMatcher(coursesApi.endpoints.detail.matchFulfilled, (state, action) => {
+        const course = action.payload?.data;
+        const courseId = course?.id ?? course?._id;
+
+        if (!courseId) {
+          return;
+        }
+
+        if (course?.isWishlisted) {
+          if (!state.courseIds.includes(courseId)) {
+            state.courseIds.push(courseId);
+          }
+        } else {
+          state.courseIds = state.courseIds.filter((id) => id !== courseId);
+        }
       });
   },
 });
