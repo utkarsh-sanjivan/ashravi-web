@@ -10,6 +10,21 @@
   min-height: 0;
 }
 
+.learning-curriculum-card--embedded {
+  border: none;
+  background-color: transparent;
+  padding: 0;
+}
+
+.learning-curriculum-card--embedded .learning-sidebar-header {
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.learning-curriculum-card--embedded .learning-sidebar-search {
+  margin-top: var(--spacing-md);
+}
+
 .learning-sidebar-header {
   display: flex;
   justify-content: space-between;
@@ -102,9 +117,10 @@
 
 .learning-lecture-button {
   width: 100%;
-  display: flex;
-  gap: var(--spacing-sm);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
+  gap: var(--spacing-sm);
   padding: var(--spacing-sm);
   border-radius: var(--radius-md);
   border: none;
@@ -126,10 +142,34 @@
   background-color: rgba(0, 112, 243, 0.12);
 }
 
+.learning-lecture-media {
+  width: 64px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-surface-hover, #f3f4f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.learning-lecture-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.learning-lecture-media-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--color-primary);
+}
+
 .learning-lecture-status {
   display: inline-flex;
-  width: 18px;
-  height: 18px;
   align-items: center;
   justify-content: center;
   color: var(--color-success, #0cb46c);

@@ -1,0 +1,57 @@
+.learning-sidebar-tabs {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: var(--learning-player-video-height, 65vh);
+  overflow: hidden;
+}
+
+.learning-sidebar-tablist {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.learning-sidebar-tab {
+  padding: var(--spacing-md);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.learning-sidebar-tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.learning-sidebar-tab--active {
+  color: var(--color-text);
+  background-color: var(--color-surface-hover, #f3f4f6);
+}
+
+.learning-sidebar-tabpanel {
+  flex: 1;
+  min-height: 0;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .learning-sidebar-tabpanel {
+    padding: var(--spacing-md);
+  }
+
+  .learning-sidebar-tabs {
+    max-height: none;
+    height: auto;
+    overflow: visible;
+  }
+}
