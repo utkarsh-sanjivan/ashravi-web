@@ -20,6 +20,8 @@ export { default as XCircleIcon } from './XCircleIcon';
 export { default as VideoIcon } from './VideoIcon';
 export { default as DocumentIcon } from './DocumentIcon';
 export { default as QuizIcon } from './QuizIcon';
+export { default as PdfIcon } from './PdfIcon';
+export { default as TestIcon } from './TestIcon';
 export { default as SpinnerIcon } from './SpinnerIcon';
 export { default as HeartIcon } from './HeartIcon';
 export { default as ClockIcon } from './ClockIcon';

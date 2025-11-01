@@ -14,14 +14,15 @@ import type { FeatureModuleKey } from '@/store/modules/registry';
 import { coursesApi, useCourseDetailQuery } from '@/store/api/courses.api';
 import { selectUserProfile } from '@/store/selectors/user.selectors';
 import { selectMockCourses } from '@/store/selectors/mock.selectors';
-import type { PDFMetadata, Course, Section } from '@/types';
+import type { Course, Section } from '@/types';
 
 import './index.css';
 import LearningPlayerSection from '@/components/organisms/LearningPlayerSection';
 import LearningNotesPanel from '@/components/organisms/LearningNotesPanel';
-import LearningCourseDetailsPanel from '@/components/organisms/LearningCourseDetailsPanel';
 import LearningCurriculumPanel from '@/components/organisms/LearningCurriculumPanel';
 import type { LectureItem } from '@/components/organisms/LearningShared/types';
+import ProgressBar from '@/components/atoms/ProgressBar';
+import { LearningSidebarTabs } from '@/components/LearningLayout';
 
 const PROGRESS_THRESHOLD = 0.9;
 const FALLBACK_VIDEO = 'https://storage.googleapis.com/ashravi-assets/videos/positive-parenting-preview.mp4';
@@ -330,20 +331,8 @@ export default function LearningPage({ courseId }: { courseId: string }) {
   };
 
   const currentNotes = notes.filter((note) => note.lectureId === activeLecture?.id);
-  const currentSection =
-    course && Array.isArray(course.sections)
-      ? (course.sections as Section[]).find((section) => section._id === activeLecture?.sectionId)
-      : undefined;
-  const resources: PDFMetadata[] = (activeLecture?.resources ?? []).filter((resource) => resource.url);
   const resolvedVideoUrl = resolveMediaUrl(activeLecture?.video?.videoUrl) ?? resolveMediaUrl(activeLecture?.video?.thumbnail) ?? FALLBACK_VIDEO;
   const isVideoLecture = activeLecture?.type === 'video' || Boolean(activeLecture?.video);
-
-  const activeLectureIndex = lectures.findIndex((lecture) => lecture.id === activeLecture?.id);
-  const previousLecture = activeLectureIndex > 0 ? lectures[activeLectureIndex - 1] : undefined;
-  const nextLecture =
-    activeLectureIndex >= 0 && activeLectureIndex < lectures.length - 1
-      ? lectures[activeLectureIndex + 1]
-      : undefined;
 
   const isLoadingState = isChecking || !featuresReady || (!course && isFetchingFallback);
 
@@ -382,6 +371,42 @@ export default function LearningPage({ courseId }: { courseId: string }) {
     );
   }
 
+  const completionPercentage = Math.round(completionRatio * 100);
+
+  const progressTabContent = (
+    <div className="learning-progress-tab">
+      <div className="learning-progress-overview">
+        <div className="learning-progress-overview-header">
+          <span className="learning-progress-label">Overall progress</span>
+          <span className="learning-progress-value">{completionPercentage}%</span>
+        </div>
+        <ProgressBar value={completionRatio} ariaLabel="Course progress" />
+      </div>
+      <LearningCurriculumPanel
+        variant="embedded"
+        courseTitle={course.title ?? 'Course curriculum'}
+        completionRatio={completionRatio}
+        sections={Array.isArray(course.sections) ? (course.sections as Section[]) : []}
+        lectures={filteredLectures}
+        activeLectureId={activeLecture.id}
+        completedLectureIds={completedLectures}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onLectureSelect={handleLectureSelect}
+      />
+    </div>
+  );
+
+  const notesTabContent = (
+    <LearningNotesPanel
+      notes={currentNotes}
+      noteDraft={noteDraft}
+      onNoteDraftChange={setNoteDraft}
+      onAddNote={handleAddNote}
+      onSeekToNote={handleSeekToNote}
+    />
+  );
+
   return (
     <div className="learning-page">
       <PublicNavbar />
@@ -399,51 +424,23 @@ export default function LearningPage({ courseId }: { courseId: string }) {
 
           <h1 className="learning-title">{course.title ?? 'Learning'}</h1>
 
-          <LearningPlayerSection
-            activeLecture={activeLecture}
-            isVideoLecture={isVideoLecture}
-            videoRef={videoRef}
-            videoUrl={resolvedVideoUrl}
-            onTimeUpdate={handleTimeUpdate}
-            onMarkComplete={() => markLectureComplete(activeLecture.id)}
-            markCompleteLoading={markingLectureId === activeLecture.id}
-          />
-
           <div className="learning-layout">
-            <div className="learning-support-column">
-              <LearningCourseDetailsPanel
+            <div className="learning-primary-column">
+              <LearningPlayerSection
                 activeLecture={activeLecture}
-                activeSection={currentSection}
-                completionRatio={completionRatio}
-                resources={resources}
-                onPrevious={previousLecture ? () => handleLectureSelect(previousLecture.id) : undefined}
-                onNext={nextLecture ? () => handleLectureSelect(nextLecture.id) : undefined}
-                hasPrevious={Boolean(previousLecture)}
-                hasNext={Boolean(nextLecture)}
-              />
-
-              <LearningNotesPanel
-                notes={currentNotes}
-                noteDraft={noteDraft}
-                onNoteDraftChange={setNoteDraft}
-                onAddNote={handleAddNote}
-                onSeekToNote={handleSeekToNote}
+                isVideoLecture={isVideoLecture}
+                videoRef={videoRef}
+                videoUrl={resolvedVideoUrl}
+                onTimeUpdate={handleTimeUpdate}
               />
             </div>
 
-            <div className="learning-curriculum-column">
-              <LearningCurriculumPanel
-                courseTitle={course.title ?? 'Course curriculum'}
-                completionRatio={completionRatio}
-                sections={Array.isArray(course.sections) ? (course.sections as Section[]) : []}
-                lectures={filteredLectures}
-                activeLectureId={activeLecture.id}
-                completedLectureIds={completedLectures}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                onLectureSelect={handleLectureSelect}
+            <aside className="learning-sidebar-column">
+              <LearningSidebarTabs
+                progressContent={progressTabContent}
+                notesContent={notesTabContent}
               />
-            </div>
+            </aside>
           </div>
         </div>
       </main>

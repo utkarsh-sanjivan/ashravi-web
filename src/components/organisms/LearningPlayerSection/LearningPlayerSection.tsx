@@ -1,7 +1,5 @@
 import type { RefObject } from 'react';
 
-import Button from '@/components/atoms/Button';
-
 import type { LectureItem } from '@/components/organisms/LearningShared/types';
 
 import './index.css';
@@ -12,8 +10,6 @@ interface LearningPlayerSectionProps {
   videoRef: RefObject<HTMLVideoElement>;
   videoUrl?: string;
   onTimeUpdate: () => void;
-  onMarkComplete: () => void;
-  markCompleteLoading: boolean;
 }
 
 export default function LearningPlayerSection({
@@ -22,8 +18,6 @@ export default function LearningPlayerSection({
   videoRef,
   videoUrl,
   onTimeUpdate,
-  onMarkComplete,
-  markCompleteLoading,
 }: LearningPlayerSectionProps) {
   return (
     <section className="learning-player">
@@ -45,17 +39,6 @@ export default function LearningPlayerSection({
           <p>This lecture is not a video. Please review the resources below.</p>
         </div>
       )}
-
-      <div className="learning-player-actions">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={onMarkComplete}
-          loading={markCompleteLoading}
-        >
-          Mark as Complete
-        </Button>
-      </div>
     </section>
   );
 }
